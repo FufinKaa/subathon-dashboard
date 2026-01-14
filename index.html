@@ -1,41 +1,110 @@
 <!DOCTYPE html>
 <html lang="cs">
 <head>
-  <meta charset="UTF-8">
-  <title>Subathon Dashboard</title>
-  <link rel="stylesheet" href="style.css">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>FUFATHON Dashboard</title>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+
+  <link rel="stylesheet" href="style.css" />
 </head>
 <body>
+  <button id="themeToggle" class="theme-toggle" aria-label="Přepnout motiv">🌙</button>
 
-<div class="container">
+  <div class="container">
+    <header class="topbar">
+      <div class="brand">
+        <div class="brand-title">FUFATHON Dashboard</div>
+        <div class="brand-sub">veřejný přehled • cute edition</div>
+      </div>
+    </header>
 
-  <div class="card big">
-    <h2>⏱️ Subathon čas</h2>
-    <div id="timer">00 h 00 min</div>
-    <div id="endTime">Konec: —</div>
+    <section class="card big">
+      <h2>⏱️ Subathon čas</h2>
+      <div class="badge">🎀 LIVE FUFATHON</div>
+
+      <div id="timer" class="timer">00 h 00 min</div>
+      <div id="endTime" class="muted">Konec: —</div>
+
+      <div class="progress-wrap">
+        <div class="progress-label">
+          <span>Progress času</span>
+          <span id="timeProgressText" class="muted">0%</span>
+        </div>
+        <div class="progress">
+          <div class="progress-fill" id="timeProgress"></div>
+        </div>
+      </div>
+    </section>
+
+    <section class="grid">
+      <div class="card">
+        <h3>💰 Vybráno</h3>
+        <div id="money" class="money">0 Kč</div>
+
+        <div class="progress-wrap">
+          <div class="progress-label">
+            <span>Cíl</span>
+            <span id="moneyProgressText" class="muted">0 / 20 000 Kč</span>
+          </div>
+          <div class="progress">
+            <div class="progress-fill" id="moneyProgress"></div>
+          </div>
+        </div>
+
+        <div class="controls-hint muted">
+          (demo tlačítka dole jen pro testování)
+        </div>
+      </div>
+
+      <div class="card">
+        <h3>🎁 Suby</h3>
+        <div class="subs">
+          <div class="subrow"><span>T1</span><span class="pill"><span id="t1">0</span> × (+10 min)</span></div>
+          <div class="subrow"><span>T2</span><span class="pill"><span id="t2">0</span> × (+15 min)</span></div>
+          <div class="subrow"><span>T3</span><span class="pill"><span id="t3">0</span> × (+20 min)</span></div>
+        </div>
+
+        <div class="rulebox">
+          <div class="rule-title">Pravidla</div>
+          <ul class="rules">
+            <li>T1 sub = +10 min</li>
+            <li>T2 sub = +15 min</li>
+            <li>T3 sub = +20 min</li>
+            <li>100 Kč donate = +15 min</li>
+          </ul>
+        </div>
+      </div>
+    </section>
+
+    <section class="card">
+      <div class="section-head">
+        <h3>📜 Poslední akce</h3>
+        <div class="muted">live feed (zatím demo)</div>
+      </div>
+      <ul id="events" class="events"></ul>
+    </section>
+
+    <!-- DEMO OVLÁDÁNÍ (můžeš pak klidně smazat) -->
+    <section class="card demo">
+      <h3>🧪 Demo ovládání</h3>
+      <div class="demo-grid">
+        <button class="btn" id="btnT1">Přidat T1 sub (+10 min) 🎉</button>
+        <button class="btn" id="btnT2">Přidat T2 sub (+15 min) 🎉</button>
+        <button class="btn" id="btnT3">Přidat T3 sub (+20 min) 🎉</button>
+        <button class="btn" id="btn100">Přidat donate 100 Kč (+15 min)</button>
+        <button class="btn ghost" id="btnReset">Reset (demo)</button>
+      </div>
+      <div class="muted small">
+        Až budeme napojovat StreamElements, tyhle demo tlačítka nepotřebuješ.
+      </div>
+    </section>
   </div>
 
-  <div class="grid">
-    <div class="card">
-      <h3>💰 Vybráno</h3>
-      <div id="money">0 Kč</div>
-    </div>
-
-    <div class="card">
-      <h3>🎁 Suby</h3>
-      <p>T1: <span id="t1">0</span></p>
-      <p>T2: <span id="t2">0</span></p>
-      <p>T3: <span id="t3">0</span></p>
-    </div>
-  </div>
-
-  <div class="card">
-    <h3>📜 Poslední akce</h3>
-    <ul id="events"></ul>
-  </div>
-
-</div>
-
-<script src="script.js"></script>
+  <!-- Confetti -->
+  <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+  <script src="script.js"></script>
 </body>
 </html>
