@@ -1,33 +1,110 @@
+@import url('https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;800&display=swap');
+
 body {
-  background: #0e0e12;
+  background: linear-gradient(135deg, #1b0f2f, #120a1f);
   color: #fff;
-  font-family: Arial, sans-serif;
+  font-family: 'Nunito', sans-serif;
+  margin: 0;
 }
 
 .container {
   max-width: 900px;
   margin: auto;
-  padding: 20px;
+  padding: 24px;
 }
 
+/* KARTY */
 .card {
-  background: #18181f;
-  border-radius: 12px;
-  padding: 20px;
+  background: rgba(30, 20, 50, 0.9);
+  border-radius: 20px;
+  padding: 24px;
   margin-bottom: 20px;
+  box-shadow: 0 10px 30px rgba(169, 112, 255, 0.15);
+  border: 1px solid rgba(255, 255, 255, 0.05);
 }
 
-.big {
+/* HLAVNÍ KARTA */
+.card.big {
   text-align: center;
+  background: linear-gradient(
+    160deg,
+    rgba(169,112,255,0.35),
+    rgba(255,153,220,0.15)
+  );
 }
 
+/* TITULKY */
+h2, h3 {
+  margin-top: 0;
+  font-weight: 800;
+  letter-spacing: 0.5px;
+}
+
+h2 {
+  font-size: 26px;
+}
+
+h3 {
+  font-size: 20px;
+}
+
+/* TIMER */
 #timer {
-  font-size: 48px;
+  font-size: 56px;
+  font-weight: 800;
+  color: #ffd6f6;
+  text-shadow: 0 0 12px rgba(255, 153, 220, 0.6);
+  margin: 10px 0;
+}
+
+#endTime {
+  opacity: 0.85;
+  font-size: 14px;
+}
+
+/* GRID */
+.grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 20px;
+}
+
+/* ČÍSLA */
+#money {
+  font-size: 32px;
+  font-weight: 800;
   color: #a970ff;
 }
 
-.grid {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 20px;
+.card p {
+  margin: 6px 0;
+  font-size: 16px;
+}
+
+/* EVENTS */
+#events {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+#events li {
+  padding: 10px 14px;
+  margin-bottom: 10px;
+  background: rgba(255, 255, 255, 0.06);
+  border-radius: 14px;
+  font-size: 14px;
+  animation: pop 0.3s ease;
+}
+
+/* ANIMACE */
+@keyframes pop {
+  from {
+    transform: scale(0.95);
+    opacity: 0;
+  }
+  to {
+    transform: scale(1);
+    opacity: 1;
+  }
 }
