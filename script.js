@@ -1,40 +1,27 @@
 // ===============================
-// FUFATHON – StreamElements LIVE
+// FUFATHON – LIVE přes Worker /state
 // ===============================
 
-// 🔐 STREAM ELEMENTS CONFIG
-const SE_CHANNEL_ID = "5ba7c85667166d9150b406fe";
-const SE_JWT = "SEM SI DEJ NOVÝ JWT TOKEN (ten starý si prosím zregeneruj)";
+const WORKER_BASE = "https://fufathon-se-proxy.pajujka191.workers.dev";
 
-const HEADERS = {
-  "Authorization": `Bearer ${SE_JWT}`
-};
-
-// 🎯 CÍLE
+// cíle (můžeš si změnit)
 const MONEY_GOAL_KC = 20000;
 const TIME_GOAL_MINUTES = 12 * 60;
 
-// 🧠 STAV
-let totalMinutes = 0;
-let totalMoneyKc = 0;
-let subs = { t1: 0, t2: 0, t3: 0 };
+let lastConfettiCounter = 0;
 
-let lastTipId = null;
-let lastSubId = null;
-
-// ===============================
-// UI HELPERS
-// ===============================
 function formatMoney(n) {
   return new Intl.NumberFormat("cs-CZ").format(n) + " Kč";
 }
 
-function addEvent(text) {
-  const ul = document.getElementById("events");
-  const li = document.createElement("li");
-  li.textContent = text;
-  ul.prepend(li);
-  while (ul.children.length > 15) ul.removeChild(ul.lastChild);
+function setText(id, value) {
+  const el = document.getElementById(id);
+  if (el) el.innerText = value;
+}
+
+function setWidth(id, percent) {
+  const el = document.getElementById(id);
+  if (el) el.style.width = `${Math.min(Math.max(percent, 0), 100)}%`;
 }
 
 function confettiBoom() {
@@ -43,118 +30,74 @@ function confettiBoom() {
     particleCount: 120,
     spread: 70,
     origin: { y: 0.6 },
-    colors: ["#ff9ad5", "#ffd6f6", "#a970ff"]
+    colors: ["#ff9ad5", "#ffd6f6", "#a970ff"],
   });
 }
 
-function updateUI() {
+function renderState(state) {
+  const totalMinutes = state.totalMinutes || 0;
+  const totalMoneyKc = state.totalMoneyKc || 0;
+
   const h = Math.floor(totalMinutes / 60);
   const m = totalMinutes % 60;
-
-  document.getElementById("timer").innerText =
-    `${String(h).padStart(2, "0")} h ${String(m).padStart(2, "0")} min`;
-
-  document.getElementById("money").innerText = formatMoney(totalMoneyKc);
-
-  document.getElementById("t1").innerText = subs.t1;
-  document.getElementById("t2").innerText = subs.t2;
-  document.getElementById("t3").innerText = subs.t3;
+  setText("timer", `${String(h).padStart(2, "0")} h ${String(m).padStart(2, "0")} min`);
 
   const end = new Date(Date.now() + totalMinutes * 60000);
-  document.getElementById("endTime").innerText =
-    "Konec: " + end.toLocaleString("cs-CZ");
+  setText("endTime", "Konec: " + end.toLocaleString("cs-CZ"));
 
-  document.getElementById("moneyProgress").style.width =
-    Math.min((totalMoneyKc / MONEY_GOAL_KC) * 100, 100) + "%";
+  setText("money", formatMoney(totalMoneyKc));
 
-  document.getElementById("timeProgress").style.width =
-    Math.min((totalMinutes / TIME_GOAL_MINUTES) * 100, 100) + "%";
-}
+  setText("t1", state.subs?.t1 ?? 0);
+  setText("t2", state.subs?.t2 ?? 0);
+  setText("t3", state.subs?.t3 ?? 0);
 
-// ===============================
-// STREAM ELEMENTS – DONATES (TIPS)
-// ===============================
-async function fetchTips() {
-  try {
-    const res = await fetch(
-      `https://api.streamelements.com/kappa/v2/tips/${SE_CHANNEL_ID}?limit=5`,
-      { headers: HEADERS }
-    );
-    if (!res.ok) return;
+  // progress
+  const moneyPct = (totalMoneyKc / MONEY_GOAL_KC) * 100;
+  setWidth("moneyProgress", moneyPct);
 
-    const json = await res.json();
-    if (!json.data) return;
+  const timePct = (totalMinutes / TIME_GOAL_MINUTES) * 100;
+  setWidth("timeProgress", timePct);
 
-    for (const tip of json.data.reverse()) {
-      if (tip._id === lastTipId) return;
+  // texty (pokud existují v HTML)
+  const moneyText = document.getElementById("moneyProgressText");
+  if (moneyText) {
+    moneyText.innerText =
+      `${new Intl.NumberFormat("cs-CZ").format(totalMoneyKc)} / ${new Intl.NumberFormat("cs-CZ").format(MONEY_GOAL_KC)} Kč`;
+  }
+  const timeText = document.getElementById("timeProgressText");
+  if (timeText) timeText.innerText = `${Math.min(timePct, 100).toFixed(0)}%`;
 
-      const amount = Math.floor(tip.amount);
-      const addMin = Math.floor(amount / 100) * 15;
-
-      totalMoneyKc += amount;
-      totalMinutes += addMin;
-
-      addEvent(`💗 ${tip.username} – donate ${amount} Kč (+${addMin} min)`);
-      updateUI();
-
-      lastTipId = tip._id;
+  // events
+  const ul = document.getElementById("events");
+  if (ul && Array.isArray(state.events)) {
+    ul.innerHTML = "";
+    for (const text of state.events) {
+      const li = document.createElement("li");
+      li.textContent = text;
+      ul.appendChild(li);
     }
-  } catch (e) {
-    console.error("TIP ERROR:", e);
+  }
+
+  // confetti trigger
+  const bump = state.bumpConfetti || 0;
+  if (bump > lastConfettiCounter) {
+    confettiBoom();
+    lastConfettiCounter = bump;
   }
 }
 
-// ===============================
-// STREAM ELEMENTS – SUBS
-// ===============================
-async function fetchSubs() {
+async function fetchState() {
   try {
-    const res = await fetch(
-      `https://api.streamelements.com/kappa/v2/subscriptions/${SE_CHANNEL_ID}?limit=5`,
-      { headers: HEADERS }
-    );
+    const res = await fetch(`${WORKER_BASE}/state`, { cache: "no-store" });
     if (!res.ok) return;
-
-    const json = await res.json();
-    if (!json.data) return;
-
-    for (const sub of json.data.reverse()) {
-      if (sub._id === lastSubId) return;
-
-      let addMin = 0;
-
-      if (sub.tier === "1000") {
-        addMin = 10;
-        subs.t1++;
-      }
-      if (sub.tier === "2000") {
-        addMin = 15;
-        subs.t2++;
-      }
-      if (sub.tier === "3000") {
-        addMin = 20;
-        subs.t3++;
-      }
-
-      totalMinutes += addMin;
-
-      addEvent(`💗 ${sub.username} – T${sub.tier[0]} sub (+${addMin} min)`);
-      confettiBoom();
-      updateUI();
-
-      lastSubId = sub._id;
-    }
+    const state = await res.json();
+    renderState(state);
   } catch (e) {
-    console.error("SUB ERROR:", e);
+    console.error("STATE ERROR:", e);
   }
 }
 
-// ===============================
-// INIT
-// ===============================
-addEvent("✨ FUFATHON je LIVE – čekám na první sub/donate 💜");
-updateUI();
-
-// Polling každých 15 sekund
-setInterval(fetchTips, 15000);
-setInterval(fetchSubs, 15000);
+document.addEventListener("DOMContentLoaded", () => {
+  fetchState();
+  setInterval(fetchState, 5000); // každých 5s
+});
