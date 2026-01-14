@@ -1,417 +1,280 @@
-:root{
-  --bg1:#0b0616;
-  --bg2:#1a0f2e;
-  --card1: rgba(255,255,255,0.06);
-  --card2: rgba(255,255,255,0.08);
-  --text:#f6eefe;
-  --muted: rgba(246, 238, 254, 0.75);
+// ===============================
+// FUFATHON Dashboard – script.js
+// - čte data z Cloudflare Worker /state
+// - Goaly 0 / 200 000
+// - light/dark toggle
+// - konfety při bumpConfetti
+// - demo tlačítka (fungují i bez napojení alertů)
+// ===============================
 
-  --pink:#ff9ad5;
-  --pink2:#ffd6f6;
-  --violet:#a970ff;
+const WORKER_BASE = "https://fufathon-se-proxy.pajujka191.workers.dev";
 
-  --shadow: 0 18px 50px rgba(0,0,0,0.35);
-  --radius: 22px;
-  --radius2: 18px;
+// 🎯 CÍLE
+const MONEY_GOAL_KC = 200000;
+const TIME_GOAL_MINUTES = 12 * 60;
+
+// 🎯 GOALY (milníky)
+const GOALS = [
+  { amount: 5000, name: "Movie night 🎬" },
+  { amount: 10000, name: "Q&A bez cenzury 😏" },
+  { amount: 15000, name: "Horror Night 👻" },
+  { amount: 20000, name: "Jídlo podle chatu 🍕" },
+  { amount: 25000, name: "Kostým stream 🤡" },
+  { amount: 30000, name: "Just Dance 💃" },
+  { amount: 35000, name: "Lego 🧱" },
+  { amount: 40000, name: "Asijská ochutnávka 🍣" },
+  { amount: 45000, name: "Minecraft SpeedRun DUO ⛏️" },
+  { amount: 50000, name: "Karaoke stream 🎤" },
+  { amount: 55000, name: "Battle Royale Challenge 🔫" },
+  { amount: 60000, name: "Bowling 🎳" },
+  { amount: 65000, name: "Try Not To Laugh 😂" },
+  { amount: 70000, name: "Běžecký pás 🏃" },
+  { amount: 75000, name: "Drunk Stream 🍻" },
+  { amount: 80000, name: "12h Stream ve stoje 🧍" },
+  { amount: 85000, name: "Split Fiction w/ Juraj 🎮" },
+  { amount: 90000, name: "Mystery box opening 🎁" },
+  { amount: 95000, name: "Turnaj v LoLku 🏆" },
+  { amount: 100000, name: "Stodolní ve stylu ✨" },
+  { amount: 110000, name: "Motokáry 🏎️" },
+  { amount: 120000, name: "ASMR stream 🌙" },
+  { amount: 125000, name: "Bolt Tower ⚡" },
+  { amount: 130000, name: "Otužování 🧊" },
+  { amount: 140000, name: "MiniGolf ⛳" },
+  { amount: 150000, name: "Vířivka ♨️" },
+  { amount: 160000, name: "Zážitkové ART studio 🎨" },
+  { amount: 170000, name: "Jízda na koni 🐴" },
+  { amount: 180000, name: "Výšlap na Lysou horu 🥾" },
+  { amount: 190000, name: "Tetování 🖋️" },
+  { amount: 200000, name: "Víkend v Praze 🏙️" },
+];
+
+let lastConfettiCounter = 0;
+
+// Lokální demo stav (když Worker nejede nebo alerty nejsou)
+let demoState = {
+  totalMinutes: 0,
+  totalMoneyKc: 0,
+  subs: { t1: 0, t2: 0, t3: 0 },
+  events: ["💗✨ FUFATHON je LIVE – čekám na první sub/donate 💜"],
+  bumpConfetti: 0,
+};
+
+// -------------------------------
+// Helpers
+// -------------------------------
+function formatNumber(n) {
+  return new Intl.NumberFormat("cs-CZ").format(n);
+}
+function formatMoney(n) {
+  return `${formatNumber(n)} Kč`;
+}
+function setText(id, value) {
+  const el = document.getElementById(id);
+  if (el) el.innerText = value;
+}
+function setWidth(id, percent) {
+  const el = document.getElementById(id);
+  if (el) el.style.width = `${Math.min(Math.max(percent, 0), 100)}%`;
+}
+function confettiBoom() {
+  if (typeof confetti !== "function") return;
+  confetti({
+    particleCount: 120,
+    spread: 70,
+    origin: { y: 0.6 },
+    colors: ["#ff9ad5", "#ffd6f6", "#a970ff"],
+  });
 }
 
-html[data-theme="light"]{
-  --bg1:#f7f0ff;
-  --bg2:#f2e7ff;
-  --card1: rgba(255,255,255,0.72);
-  --card2: rgba(255,255,255,0.82);
-  --text:#2b1c3c;
-  --muted: rgba(43, 28, 60, 0.72);
-  --shadow: 0 18px 50px rgba(34,12,60,0.18);
+// -------------------------------
+// Theme
+// -------------------------------
+function initTheme() {
+  const saved = localStorage.getItem("fufa_theme");
+  const theme = saved === "light" || saved === "dark" ? saved : "dark";
+  document.documentElement.setAttribute("data-theme", theme);
+}
+function toggleTheme() {
+  const current = document.documentElement.getAttribute("data-theme") || "dark";
+  const next = current === "dark" ? "light" : "dark";
+  document.documentElement.setAttribute("data-theme", next);
+  localStorage.setItem("fufa_theme", next);
 }
 
-*{ box-sizing:border-box; }
+// -------------------------------
+// Goals render
+// -------------------------------
+function renderGoals(totalMoneyKc) {
+  const goalsSummary = document.getElementById("goalsSummary");
+  const goalsProgress = document.getElementById("goalsProgress");
+  const goalsList = document.getElementById("goalsList");
 
-body{
-  margin:0;
-  font-family: "Nunito", system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
-  color: var(--text);
-  background:
-    radial-gradient(900px 600px at 20% 10%, rgba(255,154,213,0.22), transparent 60%),
-    radial-gradient(900px 600px at 80% 20%, rgba(169,112,255,0.22), transparent 60%),
-    linear-gradient(135deg, var(--bg1), var(--bg2));
-  min-height: 100vh;
-}
+  if (goalsSummary) {
+    goalsSummary.innerText = `${formatNumber(totalMoneyKc)} / ${formatNumber(MONEY_GOAL_KC)} Kč`;
+  }
 
-.container{
-  width: min(1160px, 92vw);
-  margin: 22px auto 60px;
-}
+  const pct = (totalMoneyKc / MONEY_GOAL_KC) * 100;
+  if (goalsProgress) goalsProgress.style.width = `${Math.min(Math.max(pct, 0), 100)}%`;
 
-.top h1{
-  margin:0;
-  font-size: 26px;
-  font-weight: 900;
-  letter-spacing: 0.3px;
-}
-.subtitle{
-  margin: 4px 0 0;
-  color: var(--muted);
-  font-size: 14px;
-}
+  if (!goalsList) return;
+  goalsList.innerHTML = "";
 
-.muted{ color: var(--muted); }
-.small{ font-size: 13px; }
+  const nextGoal = GOALS.find(g => totalMoneyKc < g.amount)?.amount ?? null;
 
-.theme-toggle{
-  position: fixed;
-  top: 16px;
-  right: 16px;
-  width: 46px;
-  height: 46px;
-  border-radius: 999px;
-  border: 1px solid rgba(255,255,255,0.15);
-  background: rgba(255,255,255,0.10);
-  backdrop-filter: blur(12px);
-  box-shadow: var(--shadow);
-  cursor: pointer;
-  display:flex;
-  align-items:center;
-  justify-content:center;
-}
-.theme-toggle:hover{ transform: translateY(-1px); }
-.theme-toggle:active{ transform: translateY(0px); }
+  for (const g of GOALS) {
+    const reached = totalMoneyKc >= g.amount;
+    const isNext = nextGoal !== null && g.amount === nextGoal;
 
-.card{
-  background: linear-gradient(180deg, var(--card2), var(--card1));
-  border: 1px solid rgba(255,255,255,0.10);
-  box-shadow: var(--shadow);
-  border-radius: var(--radius);
-  padding: 18px 18px;
-  backdrop-filter: blur(14px);
-}
+    const li = document.createElement("li");
+    li.className = `goal-item ${reached ? "reached" : ""} ${isNext ? "next" : ""}`;
 
-.grid{
-  display:grid;
-  gap: 18px;
-  margin-top: 18px;
-}
+    li.innerHTML = `
+      <div class="goal-left">
+        <div class="goal-name"><span class="heart">💗</span> ${g.name}</div>
+        <div class="goal-meta">
+          <span>${reached ? "✅ splněno" : (isNext ? "✨ nejbližší" : "⏳ čeká")}</span>
+        </div>
+      </div>
+      <div class="goal-amount">${formatNumber(g.amount)} Kč</div>
+    `;
 
-.grid-3{
-  grid-template-columns: 1fr 1.15fr 1fr;
-  align-items:start;
-}
-
-@media (min-width: 1100px){
-  .grid-3{
-    grid-template-columns: 1fr 1.6fr 1fr; /* Goaly širší */
+    goalsList.appendChild(li);
   }
 }
 
-@media (max-width: 980px){
-  .grid-3{ grid-template-columns: 1fr; }
+// -------------------------------
+// Render state
+// -------------------------------
+function renderState(state) {
+  const totalMinutes = state.totalMinutes || 0;
+  const totalMoneyKc = state.totalMoneyKc || 0;
+
+  // timer
+  const h = Math.floor(totalMinutes / 60);
+  const m = totalMinutes % 60;
+  setText("timer", `${String(h).padStart(2, "0")} h ${String(m).padStart(2, "0")} min`);
+
+  // end time (od teď + totalMinutes)
+  const end = new Date(Date.now() + totalMinutes * 60000);
+  setText("endTime", "Konec: " + end.toLocaleString("cs-CZ"));
+
+  // money + subs
+  setText("money", formatMoney(totalMoneyKc));
+  setText("t1", state.subs?.t1 ?? 0);
+  setText("t2", state.subs?.t2 ?? 0);
+  setText("t3", state.subs?.t3 ?? 0);
+
+  // progress bary
+  const moneyPct = (totalMoneyKc / MONEY_GOAL_KC) * 100;
+  setWidth("moneyProgress", moneyPct);
+
+  const timePct = (totalMinutes / TIME_GOAL_MINUTES) * 100;
+  setWidth("timeProgress", timePct);
+
+  // progress texty (pokud existují)
+  const moneyText = document.getElementById("moneyProgressText");
+  if (moneyText) {
+    moneyText.innerText = `${formatNumber(totalMoneyKc)} / ${formatNumber(MONEY_GOAL_KC)} Kč`;
+  }
+  const timeText = document.getElementById("timeProgressText");
+  if (timeText) timeText.innerText = `${Math.min(timePct, 100).toFixed(0)}%`;
+
+  // events
+  const ul = document.getElementById("events");
+  if (ul && Array.isArray(state.events)) {
+    ul.innerHTML = "";
+    for (const text of state.events) {
+      const li = document.createElement("li");
+      li.textContent = text;
+      ul.appendChild(li);
+    }
+  }
+
+  // goals
+  renderGoals(totalMoneyKc);
+
+  // confetti trigger (po subu)
+  const bump = state.bumpConfetti || 0;
+  if (bump > lastConfettiCounter) {
+    confettiBoom();
+    lastConfettiCounter = bump;
+  }
 }
 
-.card-head{
-  display:flex;
-  align-items:center;
-  justify-content:space-between;
-  gap: 10px;
-  margin-bottom: 12px;
+// -------------------------------
+// Fetch from Worker
+// -------------------------------
+async function fetchState() {
+  try {
+    const res = await fetch(`${WORKER_BASE}/state`, { cache: "no-store" });
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    const state = await res.json();
+    renderState(state);
+  } catch (e) {
+    // fallback (když Worker zrovna nejede)
+    renderState(demoState);
+  }
 }
 
-.card-title{
-  display:flex;
-  align-items:center;
-  gap: 10px;
-  font-size: 18px;
-  font-weight: 800;
+// -------------------------------
+// Demo buttons (bereme 5 tlačítek podle pořadí)
+// -------------------------------
+function pushEvent(text) {
+  demoState.events = [text, ...demoState.events].slice(0, 20);
 }
 
-.pill{
-  display:inline-flex;
-  align-items:center;
-  justify-content:center;
-  padding: 7px 12px;
-  border-radius: 999px;
-  background: rgba(255,255,255,0.08);
-  border: 1px solid rgba(255,255,255,0.12);
-  font-weight: 800;
-  white-space: nowrap;
+function demoSub(tier) {
+  if (tier === 1) { demoState.subs.t1 += 1; demoState.totalMinutes += 10; pushEvent("💗 Demo – T1 sub (+10 min)"); }
+  if (tier === 2) { demoState.subs.t2 += 1; demoState.totalMinutes += 15; pushEvent("💗 Demo – T2 sub (+15 min)"); }
+  if (tier === 3) { demoState.subs.t3 += 1; demoState.totalMinutes += 20; pushEvent("💗 Demo – T3 sub (+20 min)"); }
+  demoState.bumpConfetti += 1;
+  renderState(demoState);
+  confettiBoom();
 }
 
-.hero{
-  padding: 22px 22px;
-}
-.hero-head{
-  display:flex;
-  align-items:center;
-  justify-content:center;
-  flex-direction:column;
-  gap: 10px;
-}
-.hero-title{
-  display:flex;
-  align-items:center;
-  justify-content:center;
-  gap: 12px;
-}
-.hero-title h2{
-  margin:0;
-  font-size: 26px;
-  font-weight: 900;
-}
-.hero-title .icon{
-  font-size: 22px;
-  opacity: .9;
+function demoDonate100() {
+  demoState.totalMoneyKc += 100;
+  demoState.totalMinutes += 15;
+  pushEvent("💗 Demo – donate 100 Kč (+15 min)");
+  renderState(demoState);
 }
 
-.badge{
-  display:inline-flex;
-  align-items:center;
-  gap: 8px;
-  padding: 8px 14px;
-  border-radius: 999px;
-  font-weight: 900;
-  letter-spacing: .2px;
-  background: linear-gradient(90deg, rgba(255,154,213,0.95), rgba(169,112,255,0.75));
-  color: #2a103d;
-  box-shadow: 0 14px 34px rgba(255,154,213,0.18);
+function demoReset() {
+  demoState = {
+    totalMinutes: 0,
+    totalMoneyKc: 0,
+    subs: { t1: 0, t2: 0, t3: 0 },
+    events: ["💗✨ FUFATHON je LIVE – čekám na první sub/donate 💜"],
+    bumpConfetti: 0,
+  };
+  lastConfettiCounter = 0;
+  renderState(demoState);
 }
 
-.timer{
-  text-align:center;
-  margin-top: 6px;
-}
-.timer-big{
-  font-size: 64px;
-  font-weight: 900;
-  letter-spacing: 1px;
-  color: var(--pink2);
-  text-shadow: 0 14px 50px rgba(255,154,213,0.22);
-}
-@media (max-width: 600px){
-  .timer-big{ font-size: 44px; }
-}
-.timer-sub{
-  margin-top: 8px;
-  color: var(--muted);
+function initDemoButtons() {
+  const wrap = document.querySelector(".demo-buttons");
+  if (!wrap) return;
+
+  const btns = Array.from(wrap.querySelectorAll("button"));
+  // očekáváme pořadí: T1, T2, T3, Donate, Reset
+  if (btns[0]) btns[0].addEventListener("click", () => demoSub(1));
+  if (btns[1]) btns[1].addEventListener("click", () => demoSub(2));
+  if (btns[2]) btns[2].addEventListener("click", () => demoSub(3));
+  if (btns[3]) btns[3].addEventListener("click", demoDonate100);
+  if (btns[4]) btns[4].addEventListener("click", demoReset);
 }
 
-.progress-row{
-  display:flex;
-  align-items:center;
-  justify-content:space-between;
-  margin-top: 16px;
-  margin-bottom: 8px;
-}
-.progress-label{
-  font-weight: 800;
-  color: rgba(255,255,255,0.85);
-}
-html[data-theme="light"] .progress-label{
-  color: rgba(43, 28, 60, 0.85);
-}
-.progress-right{
-  color: var(--muted);
-  font-weight: 800;
-}
+// -------------------------------
+// Init
+// -------------------------------
+document.addEventListener("DOMContentLoaded", () => {
+  initTheme();
 
-.bar{
-  width:100%;
-  height: 14px;
-  background: rgba(255,255,255,0.08);
-  border: 1px solid rgba(255,255,255,0.10);
-  border-radius: 999px;
-  overflow:hidden;
-}
-.bar-fill{
-  height:100%;
-  width: 0%;
-  border-radius: 999px;
-  background: linear-gradient(90deg, var(--pink), var(--violet));
-  box-shadow: 0 14px 30px rgba(255,154,213,0.18);
-  transition: width .35s ease;
-}
+  const themeBtn = document.getElementById("themeToggle");
+  if (themeBtn) themeBtn.addEventListener("click", toggleTheme);
 
-.money{
-  font-size: 40px;
-  font-weight: 900;
-  color: var(--violet);
-  margin-top: 6px;
-}
+  initDemoButtons();
 
-.subs{
-  display:flex;
-  flex-direction:column;
-  gap: 12px;
-}
-.subs-row{
-  display:flex;
-  align-items:center;
-  justify-content:space-between;
-  gap: 10px;
-  font-weight: 900;
-}
-
-.rules{
-  margin-top: 16px;
-  padding: 14px 14px;
-  border-radius: var(--radius2);
-  background: rgba(255,255,255,0.06);
-  border: 1px solid rgba(255,255,255,0.10);
-}
-.rules-title{
-  font-weight: 900;
-  margin-bottom: 10px;
-}
-.rules-list{
-  list-style:none;
-  padding:0;
-  margin:0;
-  display:grid;
-  gap: 8px;
-}
-.rules-list li{
-  display:flex;
-  gap: 10px;
-  align-items:center;
-}
-
-.events{
-  list-style:none;
-  padding:0;
-  margin:0;
-  display:grid;
-  gap: 10px;
-}
-.events li{
-  padding: 12px 14px;
-  border-radius: 16px;
-  background: rgba(255,255,255,0.06);
-  border: 1px solid rgba(255,255,255,0.10);
-}
-
-/* =======================
-   GOALY – správné roztáhnutí
-   ======================= */
-
-.goals-card{
-  display:flex;
-  flex-direction:column;
-  min-height:0;
-}
-
-.goal-progress{
-  margin-top: 4px;
-  margin-bottom: 8px;
-}
-
-/* Jen vertikální scroll */
-.goals-list{
-  list-style:none;
-  padding:0;
-  margin:0;
-  display:grid;
-  gap: 10px;
-
-  max-height: 560px;
-  overflow-y: auto;
-  overflow-x: hidden; /* ❌ žádný scroll doprava */
-  padding-right: 6px;
-}
-
-/* scroll bar */
-.goals-list::-webkit-scrollbar { width: 10px; }
-.goals-list::-webkit-scrollbar-track { background: rgba(255,255,255,0.04); border-radius: 999px; }
-.goals-list::-webkit-scrollbar-thumb { background: rgba(255,154,213,0.28); border-radius: 999px; }
-
-@media (max-width: 980px){
-  .goals-list{ max-height: 420px; }
-}
-
-.goal-item{
-  display:flex;
-  align-items:center;
-  justify-content:space-between;
-  gap: 12px;
-  padding: 10px 12px;
-  border-radius: 16px;
-  background: rgba(255,255,255,0.06);
-  border: 1px solid rgba(255,255,255,0.10);
-  min-width: 0; /* 🔑 pro zalamování */
-}
-
-.goal-left{
-  display:flex;
-  flex-direction:column;
-  gap: 4px;
-  min-width: 0; /* 🔑 */
-}
-
-.goal-name{
-  font-weight: 900;
-  letter-spacing: 0.2px;
-
-  /* ✅ dovol zalomení */
-  white-space: normal;
-  word-break: break-word;
-  line-height: 1.25;
-}
-
-.goal-meta{
-  display:flex;
-  gap: 8px;
-  font-size: 12px;
-  color: var(--muted);
-}
-
-.goal-amount{
-  flex: 0 0 auto;
-  font-weight: 900;
-  padding: 6px 10px;
-  border-radius: 999px;
-  background: rgba(255, 154, 213, 0.14);
-  border: 1px solid rgba(255, 154, 213, 0.25);
-}
-
-.goal-item.reached{
-  background: rgba(255,154,213,0.12);
-  border: 1px solid rgba(255,154,213,0.30);
-  box-shadow: 0 10px 28px rgba(255,154,213,0.12);
-}
-
-.goal-item.next{
-  border: 1px solid rgba(255, 154, 213, 0.55);
-  box-shadow: 0 10px 28px rgba(255,154,213,0.18);
-}
-
-.goal-item .heart{
-  filter: drop-shadow(0 6px 16px rgba(255,154,213,0.35));
-}
-
-/* =======================
-   DEMO
-   ======================= */
-
-.demo-grid{
-  display:grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 12px;
-}
-@media (max-width: 980px){
-  .demo-grid{ grid-template-columns: 1fr; }
-}
-
-.btn{
-  padding: 12px 14px;
-  border-radius: 999px;
-  border: 1px solid rgba(255,255,255,0.12);
-  background: linear-gradient(90deg, rgba(255,154,213,0.75), rgba(169,112,255,0.45));
-  color: #2a103d;
-  font-weight: 900;
-  cursor:pointer;
-  box-shadow: 0 14px 34px rgba(255,154,213,0.14);
-}
-.btn:hover{ transform: translateY(-1px); }
-.btn:active{ transform: translateY(0px); }
-
-.btn-ghost{
-  background: rgba(255,255,255,0.10);
-  color: var(--text);
-}
+  fetchState();
+  setInterval(fetchState, 5000);
+});
