@@ -1,456 +1,276 @@
-@import url('https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;800&display=swap');
+// ===============================
+// FUFATHON – LIVE přes Worker /state + GOALY
+// ===============================
 
-:root{
-  --bg1: #1b0f2f;
-  --bg2: #120a1f;
+const WORKER_BASE = "https://fufathon-se-proxy.pajujka191.workers.dev";
 
-  --card: rgba(30, 20, 50, 0.92);
-  --card-border: rgba(255, 255, 255, 0.06);
+// 🎯 CÍLE
+const MONEY_GOAL_KC = 200000;
+const TIME_GOAL_MINUTES = 12 * 60;
 
-  --text: #ffffff;
-  --muted: rgba(255,255,255,0.75);
+// 🎯 GOALY
+const GOALS = [
+  { amount: 5000,  name: "Movie night 🎬" },
+  { amount: 10000, name: "Q&A bez cenzury 😏" },
+  { amount: 15000, name: "Horror Night 👻" },
+  { amount: 20000, name: "Jídlo podle chatu 🍕" },
+  { amount: 25000, name: "Kostým stream 🤡" },
+  { amount: 30000, name: "Just Dance 💃" },
+  { amount: 35000, name: "Lego 🧱" },
+  { amount: 40000, name: "Asijská ochutnávka 🍣" },
+  { amount: 45000, name: "Minecraft SpeedRun DUO ⛏️" },
+  { amount: 50000, name: "Karaoke stream 🎤" },
+  { amount: 55000, name: "Battle Royale Challenge 🔫" },
+  { amount: 60000, name: "Bowling 🎳" },
+  { amount: 65000, name: "Try Not To Laugh 😂" },
+  { amount: 70000, name: "Běžecký pás 🏃" },
+  { amount: 75000, name: "Drunk Stream 🍻" },
+  { amount: 80000, name: "12h Stream ve stoje 🧍" },
+  { amount: 85000, name: "Split Fiction w/ Juraj 🎮" },
+  { amount: 90000, name: "Mystery box opening 🎁" },
+  { amount: 95000, name: "Turnaj v LoLku 🏆" },
+  { amount: 100000, name: "Stodolní ve stylu ✨" },
+  { amount: 110000, name: "Motokáry 🏎️" },
+  { amount: 120000, name: "ASMR stream 🌙" },
+  { amount: 125000, name: "Bolt Tower ⚡" },
+  { amount: 130000, name: "Otužování 🧊" },
+  { amount: 140000, name: "MiniGolf ⛳" },
+  { amount: 150000, name: "Vířivka ♨️" },
+  { amount: 160000, name: "Zážitkové ART studio 🎨" },
+  { amount: 170000, name: "Jízda na koni 🐴" },
+  { amount: 180000, name: "Výšlap na Lysou horu 🥾" },
+  { amount: 190000, name: "Tetování 🖋️" },
+  { amount: 200000, name: "Víkend v Praze 🏙️" },
+];
 
-  --accent1: #ff9ad5;
-  --accent2: #a970ff;
-  --accent3: #ffd6f6;
+let lastConfettiCounter = 0;
 
-  --shadow: rgba(169, 112, 255, 0.16);
-  --soft: rgba(255, 154, 213, 0.12);
+// Lokální demo stav (na tlačítka dole) – Worker se tím nemění
+let demoState = {
+  totalMinutes: 0,
+  totalMoneyKc: 0,
+  subs: { t1: 0, t2: 0, t3: 0 },
+  events: ["💗✨ FUFATHON je LIVE – čekám na první sub/donate 💜"],
+  bumpConfetti: 0,
+};
 
-  --progress-bg: rgba(255,255,255,0.10);
+// -------------------------------
+// HELPERS
+// -------------------------------
+function formatNumber(n) {
+  return new Intl.NumberFormat("cs-CZ").format(n);
 }
 
-* { box-sizing: border-box; }
-
-body{
-  margin: 0;
-  color: var(--text);
-  font-family: 'Nunito', system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
-  background: radial-gradient(900px 600px at 20% 0%, rgba(255,154,213,0.18), transparent 60%),
-              radial-gradient(900px 600px at 80% 20%, rgba(169,112,255,0.22), transparent 60%),
-              linear-gradient(135deg, var(--bg1), var(--bg2));
+function formatMoney(n) {
+  return `${formatNumber(n)} Kč`;
 }
 
-.container{
-  max-width: 960px;
-  margin: 0 auto;
-  padding: 24px;
+function setText(id, value) {
+  const el = document.getElementById(id);
+  if (el) el.innerText = value;
 }
 
-.topbar{
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  margin-bottom: 18px;
+function setWidth(id, percent) {
+  const el = document.getElementById(id);
+  if (el) el.style.width = `${Math.min(Math.max(percent, 0), 100)}%`;
 }
 
-.brand-title{
-  font-weight: 800;
-  letter-spacing: 0.4px;
-  font-size: 20px;
+function confettiBoom() {
+  if (typeof confetti !== "function") return;
+  confetti({
+    particleCount: 120,
+    spread: 70,
+    origin: { y: 0.6 },
+    colors: ["#ff9ad5", "#ffd6f6", "#a970ff"],
+  });
 }
 
-.brand-sub{
-  margin-top: 2px;
-  font-size: 13px;
-  color: var(--muted);
-}
+// -------------------------------
+// GOALS
+// -------------------------------
+function renderGoals(totalMoneyKc) {
+  const goalsSummary = document.getElementById("goalsSummary");
+  const goalsProgress = document.getElementById("goalsProgress");
+  const goalsList = document.getElementById("goalsList");
 
-.card{
-  background: var(--card);
-  border: 1px solid var(--card-border);
-  border-radius: 22px;
-  padding: 22px;
-  margin-bottom: 18px;
-  box-shadow: 0 12px 40px var(--shadow);
-  backdrop-filter: blur(8px);
-}
+  if (goalsSummary) {
+    goalsSummary.innerText = `${formatNumber(totalMoneyKc)} / ${formatNumber(MONEY_GOAL_KC)} Kč`;
+  }
 
-.card.big{
-  text-align: center;
-  background: linear-gradient(160deg, rgba(169,112,255,0.30), rgba(255,154,213,0.14));
-}
+  const pct = (totalMoneyKc / MONEY_GOAL_KC) * 100;
+  if (goalsProgress) {
+    goalsProgress.style.width = `${Math.min(Math.max(pct, 0), 100)}%`;
+  }
 
-h2, h3{
-  margin: 0 0 10px 0;
-  font-weight: 800;
-}
+  if (!goalsList) return;
 
-h2{ font-size: 26px; }
-h3{ font-size: 20px; }
+  goalsList.innerHTML = "";
 
-.muted{
-  color: var(--muted);
-}
+  const nextGoal = GOALS.find(g => totalMoneyKc < g.amount)?.amount ?? null;
 
-.small{
-  font-size: 13px;
-  margin-top: 10px;
-}
+  for (const g of GOALS) {
+    const reached = totalMoneyKc >= g.amount;
+    const isNext = nextGoal !== null && g.amount === nextGoal;
 
-.badge{
-  display: inline-block;
-  margin: 2px 0 14px 0;
-  padding: 6px 14px;
-  border-radius: 999px;
-  font-size: 14px;
-  font-weight: 800;
-  background: linear-gradient(135deg, var(--accent1), var(--accent2));
-  box-shadow: 0 0 18px rgba(255,154,213,0.55);
-}
+    const li = document.createElement("li");
+    li.className = `goal-item ${reached ? "reached" : ""} ${isNext ? "next" : ""}`;
 
-.timer{
-  font-size: 56px;
-  font-weight: 800;
-  color: var(--accent3);
-  text-shadow: 0 0 14px rgba(255,154,213,0.55);
-  margin: 8px 0 6px;
-}
+    li.innerHTML = `
+      <div class="goal-left">
+        <div class="goal-name"><span class="heart">💗</span> ${g.name}</div>
+        <div class="goal-meta">
+          <span>${reached ? "✅ splněno" : (isNext ? "✨ nejbližší" : "⏳ čeká")}</span>
+        </div>
+      </div>
+      <div class="goal-amount">${formatNumber(g.amount)} Kč</div>
+    `;
 
-.money{
-  font-size: 34px;
-  font-weight: 800;
-  color: var(--accent2);
-  margin-bottom: 6px;
-}
-
-.grid{
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
-  gap: 18px;
-}
-
-.progress-wrap{
-  margin-top: 14px;
-}
-
-.progress-label{
-  display: flex;
-  justify-content: space-between;
-  font-size: 13px;
-  margin-bottom: 8px;
-}
-
-.progress{
-  width: 100%;
-  height: 14px;
-  background: var(--progress-bg);
-  border-radius: 999px;
-  overflow: hidden;
-}
-
-.progress-fill{
-  height: 100%;
-  width: 0%;
-  background: linear-gradient(90deg, var(--accent1), var(--accent3));
-  box-shadow: 0 0 12px rgba(255,154,213,0.8);
-  transition: width 0.5s ease;
-}
-
-.subs{
-  display: grid;
-  gap: 10px;
-}
-
-.subrow{
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  font-size: 16px;
-}
-
-.pill{
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  padding: 7px 12px;
-  border-radius: 999px;
-  background: rgba(255,255,255,0.06);
-  border: 1px solid rgba(255,255,255,0.06);
-}
-
-.rulebox{
-  margin-top: 14px;
-  padding: 14px;
-  border-radius: 16px;
-  background: rgba(255,255,255,0.05);
-  border: 1px solid rgba(255,255,255,0.06);
-}
-
-.rule-title{
-  font-weight: 800;
-  margin-bottom: 8px;
-}
-
-.rules{
-  margin: 0;
-  padding-left: 0;
-  list-style: none;
-}
-
-.rules li{
-  margin: 6px 0;
-}
-
-/* 🐾 srdíčka místo puntíků */
-.rules li::before{
-  content: "💗 ";
-}
-
-.section-head{
-  display: flex;
-  align-items: baseline;
-  justify-content: space-between;
-  gap: 12px;
-  margin-bottom: 8px;
-}
-
-.events{
-  list-style: none;
-  padding: 0;
-  margin: 0;
-}
-
-.events li{
-  padding: 10px 14px;
-  margin-bottom: 10px;
-  background: rgba(255, 255, 255, 0.06);
-  border-radius: 16px;
-  border: 1px solid rgba(255,255,255,0.06);
-  font-size: 14px;
-  animation: pop 0.28s ease;
-}
-
-/* 🐾 srdíčka i u feedu */
-.events li::before{
-  content: "💗 ";
-}
-
-@keyframes pop {
-  from { transform: scale(0.97); opacity: 0; }
-  to   { transform: scale(1); opacity: 1; }
-}
-
-/* Demo tlačítka */
-.demo-grid{
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
-  gap: 12px;
-}
-
-.btn{
-  cursor: pointer;
-  border: none;
-  border-radius: 16px;
-  padding: 12px 14px;
-  font-weight: 800;
-  font-family: inherit;
-  color: #1a0d2a;
-  background: linear-gradient(135deg, var(--accent1), var(--accent3));
-  box-shadow: 0 10px 24px var(--soft);
-  transition: transform 0.08s ease, filter 0.2s ease;
-}
-.btn:hover{ filter: brightness(1.03); }
-.btn:active{ transform: scale(0.98); }
-
-.btn.ghost{
-  background: rgba(255,255,255,0.10);
-  color: var(--text);
-  border: 1px solid rgba(255,255,255,0.10);
-}
-
-/* Theme toggle */
-.theme-toggle{
-  position: fixed;
-  top: 18px;
-  right: 18px;
-  width: 46px;
-  height: 46px;
-  border-radius: 999px;
-  border: none;
-  cursor: pointer;
-  font-size: 18px;
-  background: linear-gradient(135deg, var(--accent1), var(--accent2));
-  box-shadow: 0 0 18px rgba(255,154,213,0.55);
-}
-
-/* 🌙 LIGHT MODE */
-body.light{
-  --bg1: #fff0f7;
-  --bg2: #f3eaff;
-
-  --card: rgba(255,255,255,0.92);
-  --card-border: rgba(36, 12, 70, 0.08);
-
-  --text: #2b183f;
-  --muted: rgba(43, 24, 63, 0.68);
-
-  --shadow: rgba(80, 40, 150, 0.12);
-  --soft: rgba(255, 154, 213, 0.14);
-
-  --progress-bg: rgba(43,24,63,0.10);
-}
-
-body.light .btn.ghost{
-  background: rgba(43,24,63,0.06);
-  border: 1px solid rgba(43,24,63,0.10);
-}
-/* ========= GOALY ========= */
-.goals-card .goal-progress {
-  margin-top: 10px;
-  margin-bottom: 12px;
-}
-
-.goals-list {
-  list-style: none;
-  padding: 0;
-  margin: 0;
-  display: grid;
-  gap: 10px;
-}
-
-.goal-item {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 12px 14px;
-  border-radius: 16px;
-  background: rgba(255,255,255,0.06);
-  border: 1px solid rgba(255,255,255,0.08);
-  box-shadow: 0 8px 25px rgba(0,0,0,0.12);
-  backdrop-filter: blur(10px);
-}
-
-.goal-left {
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-  min-width: 0;
-}
-
-.goal-name {
-  font-weight: 700;
-  letter-spacing: 0.2px;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
-.goal-meta {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  font-size: 13px;
-  opacity: 0.85;
-}
-
-.goal-amount {
-  font-weight: 800;
-  padding: 6px 10px;
-  border-radius: 999px;
-  background: rgba(255, 154, 213, 0.14);
-  border: 1px solid rgba(255, 154, 213, 0.25);
-}
-
-.goal-status {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  font-size: 13px;
-  opacity: 0.9;
-}
-
-.goal-item.reached {
-  background: rgba(255,154,213,0.12);
-  border: 1px solid rgba(255,154,213,0.30);
-  box-shadow: 0 10px 28px rgba(255,154,213,0.12);
-}
-
-.goal-item.reached .goal-name {
-  text-decoration: none;
-}
-
-.goal-item .heart {
-  filter: drop-shadow(0 6px 16px rgba(255,154,213,0.35));
-}
-
-/* =========================
-   LAYOUT – aby to sedělo líp
-   ========================= */
-
-/* 1) Na větších obrazovkách dej Goaly víc místa (prostřední sloupec širší) */
-@media (min-width: 1100px) {
-  .grid-3 {
-    /* pokud máš grid s 3 kartama vedle sebe */
-    grid-template-columns: 1fr 1.35fr 1fr;
-    align-items: start;
+    goalsList.appendChild(li);
   }
 }
 
-/* 2) Goaly karta: udělej z ní "scroll card" */
-.goals-card {
-  display: flex;
-  flex-direction: column;
-  min-height: 0; /* důležité pro scroll uvnitř flex */
-}
+// -------------------------------
+// RENDER STATE
+// -------------------------------
+function renderState(state) {
+  const totalMinutes = state.totalMinutes || 0;
+  const totalMoneyKc = state.totalMoneyKc || 0;
 
-/* seznam goalů bude scrollovat uvnitř karty */
-.goals-list {
-  max-height: 560px;      /* můžeš klidně upravit na 500–700 */
-  overflow: auto;
-  padding-right: 6px;     /* místo pro scrollbar */
-  margin-top: 8px;
-}
+  // timer
+  const h = Math.floor(totalMinutes / 60);
+  const m = totalMinutes % 60;
+  setText("timer", `${String(h).padStart(2, "0")} h ${String(m).padStart(2, "0")} min`);
 
-/* hezčí scrollbar (Chrome/Edge) */
-.goals-list::-webkit-scrollbar { width: 10px; }
-.goals-list::-webkit-scrollbar-track { background: rgba(255,255,255,0.04); border-radius: 999px; }
-.goals-list::-webkit-scrollbar-thumb { background: rgba(255,154,213,0.28); border-radius: 999px; }
+  // end time (od teď + totalMinutes)
+  const end = new Date(Date.now() + totalMinutes * 60000);
+  setText("endTime", "Konec: " + end.toLocaleString("cs-CZ"));
 
-/* 3) Goal item trochu kompaktnější */
-.goal-item {
-  padding: 10px 12px;
-}
+  // money + subs
+  setText("money", formatMoney(totalMoneyKc));
+  setText("t1", state.subs?.t1 ?? 0);
+  setText("t2", state.subs?.t2 ?? 0);
+  setText("t3", state.subs?.t3 ?? 0);
 
-.goal-name {
-  font-size: 14px;
-}
+  // progress bary
+  const moneyPct = (totalMoneyKc / MONEY_GOAL_KC) * 100;
+  setWidth("moneyProgress", moneyPct);
 
-.goal-meta {
-  font-size: 12px;
-  opacity: .85;
-}
+  const timePct = (totalMinutes / TIME_GOAL_MINUTES) * 100;
+  setWidth("timeProgress", timePct);
 
-.goal-amount {
-  font-size: 12px;
-  padding: 6px 10px;
-}
-
-/* 4) Zvýraznění nejbližšího goalu (jemně, ať to nekřičí) */
-.goal-item.next {
-  border: 1px solid rgba(255, 154, 213, 0.55);
-  box-shadow: 0 10px 28px rgba(255,154,213,0.18);
-}
-
-/* 5) Na menších obrazovkách to seskládej pod sebe */
-@media (max-width: 980px) {
-  .grid-3 {
-    grid-template-columns: 1fr;
+  // texty
+  const moneyText = document.getElementById("moneyProgressText");
+  if (moneyText) {
+    moneyText.innerText = `${formatNumber(totalMoneyKc)} / ${formatNumber(MONEY_GOAL_KC)} Kč`;
   }
-  .goals-list {
-    max-height: 420px; /* menší scroll na mobilu */
+  setText("timeProgressText", `${Math.min(timePct, 100).toFixed(0)}%`);
+
+  // events
+  const ul = document.getElementById("events");
+  if (ul && Array.isArray(state.events)) {
+    ul.innerHTML = "";
+    for (const text of state.events) {
+      const li = document.createElement("li");
+      li.textContent = text;
+      ul.appendChild(li);
+    }
+  }
+
+  // goals
+  renderGoals(totalMoneyKc);
+
+  // confetti (po subu)
+  const bump = state.bumpConfetti || 0;
+  if (bump > lastConfettiCounter) {
+    confettiBoom();
+    lastConfettiCounter = bump;
   }
 }
 
-/* 6) Hlavička goalů a pill hezky na jednu řádku */
-.goals-card .card-head {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 10px;
+// -------------------------------
+// FETCH STATE (Worker)
+// -------------------------------
+async function fetchState() {
+  try {
+    const res = await fetch(`${WORKER_BASE}/state`, { cache: "no-store" });
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    const state = await res.json();
+    renderState(state);
+  } catch (e) {
+    // když Worker zrovna nejede, držíme aspoň demo
+    renderState(demoState);
+  }
 }
 
-.goals-card .pill {
-  white-space: nowrap;
+// -------------------------------
+// THEME TOGGLE
+// -------------------------------
+function initTheme() {
+  const saved = localStorage.getItem("fufa_theme");
+  if (saved === "light" || saved === "dark") {
+    document.documentElement.setAttribute("data-theme", saved);
+  }
 }
 
+function toggleTheme() {
+  const current = document.documentElement.getAttribute("data-theme") || "dark";
+  const next = current === "dark" ? "light" : "dark";
+  document.documentElement.setAttribute("data-theme", next);
+  localStorage.setItem("fufa_theme", next);
+}
+
+// -------------------------------
+// DEMO BUTTONS
+// -------------------------------
+function pushEvent(text) {
+  demoState.events = [text, ...demoState.events].slice(0, 20);
+}
+
+function demoSub(tier) {
+  if (tier === 1) { demoState.subs.t1 += 1; demoState.totalMinutes += 10; pushEvent(`💗 Demo – T1 sub (+10 min)`); }
+  if (tier === 2) { demoState.subs.t2 += 1; demoState.totalMinutes += 15; pushEvent(`💗 Demo – T2 sub (+15 min)`); }
+  if (tier === 3) { demoState.subs.t3 += 1; demoState.totalMinutes += 20; pushEvent(`💗 Demo – T3 sub (+20 min)`); }
+  demoState.bumpConfetti += 1;
+  renderState(demoState);
+  confettiBoom();
+}
+
+function demoDonate100() {
+  demoState.totalMoneyKc += 100;
+  demoState.totalMinutes += 15;
+  pushEvent(`💗 Demo – donate 100 Kč (+15 min)`);
+  renderState(demoState);
+}
+
+function demoReset() {
+  demoState = {
+    totalMinutes: 0,
+    totalMoneyKc: 0,
+    subs: { t1: 0, t2: 0, t3: 0 },
+    events: ["💗✨ FUFATHON je LIVE – čekám na první sub/donate 💜"],
+    bumpConfetti: 0,
+  };
+  lastConfettiCounter = 0;
+  renderState(demoState);
+}
+
+// -------------------------------
+// INIT
+// -------------------------------
+document.addEventListener("DOMContentLoaded", () => {
+  initTheme();
+
+  const btnTheme = document.getElementById("themeToggle");
+  if (btnTheme) btnTheme.addEventListener("click", toggleTheme);
+
+  // demo
+  document.getElementById("demoT1")?.addEventListener("click", () => demoSub(1));
+  document.getElementById("demoT2")?.addEventListener("click", () => demoSub(2));
+  document.getElementById("demoT3")?.addEventListener("click", () => demoSub(3));
+  document.getElementById("demoDono")?.addEventListener("click", demoDonate100);
+  document.getElementById("demoReset")?.addEventListener("click", demoReset);
+
+  // start
+  fetchState();
+  setInterval(fetchState, 5000);
+});
