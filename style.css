@@ -1,110 +1,177 @@
 @import url('https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;800&display=swap');
 
-body {
-  background: linear-gradient(135deg, #1b0f2f, #120a1f);
-  color: #fff;
-  font-family: 'Nunito', sans-serif;
+:root{
+  --bg1: #1b0f2f;
+  --bg2: #120a1f;
+
+  --card: rgba(30, 20, 50, 0.92);
+  --card-border: rgba(255, 255, 255, 0.06);
+
+  --text: #ffffff;
+  --muted: rgba(255,255,255,0.75);
+
+  --accent1: #ff9ad5;
+  --accent2: #a970ff;
+  --accent3: #ffd6f6;
+
+  --shadow: rgba(169, 112, 255, 0.16);
+  --soft: rgba(255, 154, 213, 0.12);
+
+  --progress-bg: rgba(255,255,255,0.10);
+}
+
+* { box-sizing: border-box; }
+
+body{
   margin: 0;
+  color: var(--text);
+  font-family: 'Nunito', system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+  background: radial-gradient(900px 600px at 20% 0%, rgba(255,154,213,0.18), transparent 60%),
+              radial-gradient(900px 600px at 80% 20%, rgba(169,112,255,0.22), transparent 60%),
+              linear-gradient(135deg, var(--bg1), var(--bg2));
 }
 
-.container {
-  max-width: 900px;
-  margin: auto;
+.container{
+  max-width: 960px;
+  margin: 0 auto;
   padding: 24px;
 }
 
-/* KARTY */
-.card {
-  background: rgba(30, 20, 50, 0.9);
-  border-radius: 20px;
-  padding: 24px;
-  margin-bottom: 20px;
-  box-shadow: 0 10px 30px rgba(169, 112, 255, 0.15);
-  border: 1px solid rgba(255, 255, 255, 0.05);
+.topbar{
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 18px;
 }
 
-/* HLAVNÍ KARTA */
-.card.big {
-  text-align: center;
-  background: linear-gradient(
-    160deg,
-    rgba(169,112,255,0.35),
-    rgba(255,153,220,0.15)
-  );
-}
-
-/* TITULKY */
-h2, h3 {
-  margin-top: 0;
+.brand-title{
   font-weight: 800;
-  letter-spacing: 0.5px;
-}
-
-h2 {
-  font-size: 26px;
-}
-
-h3 {
+  letter-spacing: 0.4px;
   font-size: 20px;
 }
 
-/* TIMER */
-#timer {
+.brand-sub{
+  margin-top: 2px;
+  font-size: 13px;
+  color: var(--muted);
+}
+
+.card{
+  background: var(--card);
+  border: 1px solid var(--card-border);
+  border-radius: 22px;
+  padding: 22px;
+  margin-bottom: 18px;
+  box-shadow: 0 12px 40px var(--shadow);
+  backdrop-filter: blur(8px);
+}
+
+.card.big{
+  text-align: center;
+  background: linear-gradient(160deg, rgba(169,112,255,0.30), rgba(255,154,213,0.14));
+}
+
+h2, h3{
+  margin: 0 0 10px 0;
+  font-weight: 800;
+}
+
+h2{ font-size: 26px; }
+h3{ font-size: 20px; }
+
+.muted{
+  color: var(--muted);
+}
+
+.small{
+  font-size: 13px;
+  margin-top: 10px;
+}
+
+.badge{
+  display: inline-block;
+  margin: 2px 0 14px 0;
+  padding: 6px 14px;
+  border-radius: 999px;
+  font-size: 14px;
+  font-weight: 800;
+  background: linear-gradient(135deg, var(--accent1), var(--accent2));
+  box-shadow: 0 0 18px rgba(255,154,213,0.55);
+}
+
+.timer{
   font-size: 56px;
   font-weight: 800;
-  color: #ffd6f6;
-  text-shadow: 0 0 12px rgba(255, 153, 220, 0.6);
-  margin: 10px 0;
+  color: var(--accent3);
+  text-shadow: 0 0 14px rgba(255,154,213,0.55);
+  margin: 8px 0 6px;
 }
 
-#endTime {
-  opacity: 0.85;
-  font-size: 14px;
-}
-
-/* GRID */
-.grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
-  gap: 20px;
-}
-
-/* ČÍSLA */
-#money {
-  font-size: 32px;
+.money{
+  font-size: 34px;
   font-weight: 800;
-  color: #a970ff;
+  color: var(--accent2);
+  margin-bottom: 6px;
 }
 
-.card p {
-  margin: 6px 0;
+.grid{
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap: 18px;
+}
+
+.progress-wrap{
+  margin-top: 14px;
+}
+
+.progress-label{
+  display: flex;
+  justify-content: space-between;
+  font-size: 13px;
+  margin-bottom: 8px;
+}
+
+.progress{
+  width: 100%;
+  height: 14px;
+  background: var(--progress-bg);
+  border-radius: 999px;
+  overflow: hidden;
+}
+
+.progress-fill{
+  height: 100%;
+  width: 0%;
+  background: linear-gradient(90deg, var(--accent1), var(--accent3));
+  box-shadow: 0 0 12px rgba(255,154,213,0.8);
+  transition: width 0.5s ease;
+}
+
+.subs{
+  display: grid;
+  gap: 10px;
+}
+
+.subrow{
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
   font-size: 16px;
 }
 
-/* EVENTS */
-#events {
-  list-style: none;
-  padding: 0;
-  margin: 0;
+.pill{
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 7px 12px;
+  border-radius: 999px;
+  background: rgba(255,255,255,0.06);
+  border: 1px solid rgba(255,255,255,0.06);
 }
 
-#events li {
-  padding: 10px 14px;
-  margin-bottom: 10px;
-  background: rgba(255, 255, 255, 0.06);
-  border-radius: 14px;
-  font-size: 14px;
-  animation: pop 0.3s ease;
-}
-
-/* ANIMACE */
-@keyframes pop {
-  from {
-    transform: scale(0.95);
-    opacity: 0;
-  }
-  to {
-    transform: scale(1);
-    opacity: 1;
-  }
-}
+.rulebox{
+  margin-top: 14px;
+  padding: 14px;
+  border-radius: 16px;
+  background: rgba(255,255,255,0.05);
+  border: 1px solid rgba(255,255,25
