@@ -1,130 +1,164 @@
-<!DOCTYPE html>
-<html lang="cs">
+<!doctype html>
+<html lang="cs" data-theme="dark">
 <head>
-  <meta charset="UTF-8" />
+  <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>FUFATHON Dashboard</title>
-
+  <link rel="stylesheet" href="style.css" />
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-
-  <link rel="stylesheet" href="style.css" />
+  <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@500;700;800;900&display=swap" rel="stylesheet">
 </head>
-<body>
-  <button id="themeToggle" class="theme-toggle" aria-label="Přepnout motiv">🌙</button>
 
-  <div class="container">
-    <header class="topbar">
-      <div class="brand">
-        <div class="brand-title">FUFATHON Dashboard</div>
-        <div class="brand-sub">veřejný přehled • cute edition</div>
+<body>
+  <button id="themeToggle" class="theme-toggle" aria-label="Přepnout motiv">
+    <span class="moon">🌙</span>
+  </button>
+
+  <main class="container">
+    <header class="top">
+      <div>
+        <h1>FUFATHON <span class="muted">Dashboard</span></h1>
+        <p class="subtitle">veřejný přehled • cute edition</p>
       </div>
     </header>
 
-    <section class="card big">
-      <h2>⏱️ Subathon čas</h2>
-      <div class="badge">🎀 LIVE FUFATHON</div>
-
-      <div id="timer" class="timer">00 h 00 min</div>
-      <div id="endTime" class="muted">Konec: —</div>
-
-      <div class="progress-wrap">
-        <div class="progress-label">
-          <span>Progress času</span>
-          <span id="timeProgressText" class="muted">0%</span>
+    <!-- HERO TIMER -->
+    <section class="card hero">
+      <div class="hero-head">
+        <div class="hero-title">
+          <span class="icon">⏱️</span>
+          <h2>Subathon čas</h2>
         </div>
-        <div class="progress">
-          <div class="progress-fill" id="timeProgress"></div>
+
+        <div class="badge-wrap">
+          <span class="badge">🎀 LIVE FUFATHON</span>
         </div>
+      </div>
+
+      <div class="timer">
+        <div id="timer" class="timer-big">00 h 00 min</div>
+        <div id="endTime" class="timer-sub">Konec: —</div>
+      </div>
+
+      <div class="progress-row">
+        <div class="progress-label">Progress času</div>
+        <div class="progress-right"><span id="timeProgressText">0%</span></div>
+      </div>
+      <div class="bar">
+        <div id="timeProgress" class="bar-fill"></div>
       </div>
     </section>
 
-    <section class="grid">
-      <div class="card">
-        <h3>💰 Vybráno</h3>
+    <!-- 3 CARDS ROW -->
+    <section class="grid grid-3">
+      <!-- MONEY -->
+      <section class="card">
+        <div class="card-head">
+          <div class="card-title">💰 <span>Vybráno</span></div>
+        </div>
+
         <div id="money" class="money">0 Kč</div>
 
-        <div class="progress-wrap">
-          <div class="progress-label">
-            <span>Cíl</span>
-            <span id="moneyProgressText" class="muted">0 / 20 000 Kč</span>
-          </div>
-          <div class="progress">
-            <div class="progress-fill" id="moneyProgress"></div>
-          </div>
+        <div class="progress-row" style="margin-top: 14px;">
+          <div class="progress-label">Cíl</div>
+          <div class="progress-right"><span id="moneyProgressText">0 / 200 000 Kč</span></div>
+        </div>
+        <div class="bar">
+          <div id="moneyProgress" class="bar-fill"></div>
         </div>
 
-        <div class="controls-hint muted">
+        <div class="muted small" style="margin-top:10px;">
           (demo tlačítka dole jen pro testování)
         </div>
-      </div>
-<!-- 🎯 GOALY -->
-<section class="card goals-card">
-  <div class="card-head">
-    <div class="card-title">
-      🎯 <span>Goaly</span>
-    </div>
-    <div class="card-right">
-      <span id="goalsSummary" class="pill">0 / 200 000 Kč</span>
-    </div>
-  </div>
+      </section>
 
-  <div class="goal-progress">
-    <div class="bar">
-      <div id="goalsProgress" class="bar-fill"></div>
-    </div>
-  </div>
-
-  <ul id="goalsList" class="goals-list"></ul>
-
-  <div class="muted small">
-    💗 Milníky se automaticky označí podle vybraných Kč.
-  </div>
-</section>
-
-      <div class="card">
-        <h3>🎁 Suby</h3>
-        <div class="subs">
-          <div class="subrow"><span>T1</span><span class="pill"><span id="t1">0</span> × (+10 min)</span></div>
-          <div class="subrow"><span>T2</span><span class="pill"><span id="t2">0</span> × (+15 min)</span></div>
-          <div class="subrow"><span>T3</span><span class="pill"><span id="t3">0</span> × (+20 min)</span></div>
+      <!-- GOALS -->
+      <section class="card goals-card">
+        <div class="card-head">
+          <div class="card-title">🎯 <span>Goaly</span></div>
+          <div class="card-right">
+            <span id="goalsSummary" class="pill">0 / 200 000 Kč</span>
+          </div>
         </div>
 
-        <div class="rulebox">
-          <div class="rule-title">Pravidla</div>
-          <ul class="rules">
-            <li>T1 sub = +10 min</li>
-            <li>T2 sub = +15 min</li>
-            <li>T3 sub = +20 min</li>
-            <li>100 Kč donate = +15 min</li>
+        <div class="goal-progress">
+          <div class="bar">
+            <div id="goalsProgress" class="bar-fill"></div>
+          </div>
+        </div>
+
+        <ul id="goalsList" class="goals-list"></ul>
+
+        <div class="muted small" style="margin-top:10px;">
+          💗 Milníky se automaticky označí podle vybraných Kč.
+        </div>
+      </section>
+
+      <!-- SUBS -->
+      <section class="card">
+        <div class="card-head">
+          <div class="card-title">🎁 <span>Suby</span></div>
+        </div>
+
+        <div class="subs">
+          <div class="subs-row">
+            <span>T1</span>
+            <span class="pill"><span id="t1">0</span> × (+10 min)</span>
+          </div>
+          <div class="subs-row">
+            <span>T2</span>
+            <span class="pill"><span id="t2">0</span> × (+15 min)</span>
+          </div>
+          <div class="subs-row">
+            <span>T3</span>
+            <span class="pill"><span id="t3">0</span> × (+20 min)</span>
+          </div>
+        </div>
+
+        <div class="rules">
+          <div class="rules-title">Pravidla</div>
+          <ul class="rules-list">
+            <li>💗 T1 sub = +10 min</li>
+            <li>💗 T2 sub = +15 min</li>
+            <li>💗 T3 sub = +20 min</li>
+            <li>💗 100 Kč donate = +15 min</li>
           </ul>
         </div>
-      </div>
+      </section>
     </section>
 
+    <!-- EVENTS -->
     <section class="card">
-      <div class="section-head">
-        <h3>📜 Poslední akce</h3>
-        <div class="muted">live feed (zatím demo)</div>
+      <div class="card-head">
+        <div class="card-title">📜 <span>Poslední akce</span></div>
+        <div class="muted small">live feed (zatím demo)</div>
       </div>
-      <ul id="events" class="events"></ul>
+
+      <ul id="events" class="events">
+        <li>💗✨ FUFATHON je LIVE – čekám na první sub/donate 💜</li>
+      </ul>
     </section>
 
-    <!-- DEMO OVLÁDÁNÍ (můžeš pak klidně smazat) -->
-    <section class="card demo">
-      <h3>🧪 Demo ovládání</h3>
-      <div class="demo-grid">
-        <button class="btn" id="btnT1">Přidat T1 sub (+10 min) 🎉</button>
-        <button class="btn" id="btnT2">Přidat T2 sub (+15 min) 🎉</button>
-        <button class="btn" id="btnT3">Přidat T3 sub (+20 min) 🎉</button>
-        <button class="btn" id="btn100">Přidat donate 100 Kč (+15 min)</button>
-        <button class="btn ghost" id="btnReset">Reset (demo)</button>
+    <!-- DEMO -->
+    <section class="card">
+      <div class="card-head">
+        <div class="card-title">🧪 <span>Demo ovládání</span></div>
       </div>
-      <div class="muted small">
+
+      <div class="demo-grid">
+        <button class="btn" id="demoT1">Přidat T1 sub (+10 min) 🎉</button>
+        <button class="btn" id="demoT2">Přidat T2 sub (+15 min) 🎉</button>
+        <button class="btn" id="demoT3">Přidat T3 sub (+20 min) 🎉</button>
+        <button class="btn" id="demoDono">Přidat donate 100 Kč (+15 min)</button>
+        <button class="btn btn-ghost" id="demoReset">Reset (demo)</button>
+      </div>
+
+      <div class="muted small" style="margin-top:10px;">
         Až budeme napojovat StreamElements, tyhle demo tlačítka nepotřebuješ.
       </div>
     </section>
-  </div>
+  </main>
 
   <!-- Confetti -->
   <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
