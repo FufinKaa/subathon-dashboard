@@ -1,11 +1,10 @@
 <!DOCTYPE html>
-<html lang="cs">
+<html lang="cs" data-theme="dark">
 <head>
   <meta charset="UTF-8" />
   <title>FUFATHON Dashboard</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 
-  <!-- 🌸 STYLY -->
   <link rel="stylesheet" href="/subathon-dashboard/style.css" />
 
   <!-- 🎉 CONFETTI -->
@@ -14,26 +13,37 @@
 
 <body>
   <!-- 🌙 DARK / LIGHT TOGGLE -->
-  <button id="themeToggle" class="theme-toggle" aria-label="Přepnout motiv">
-    🌙
-  </button>
+  <button id="themeToggle" class="theme-toggle" aria-label="Přepnout motiv">🌙</button>
 
   <header class="header">
     <h1>FUFATHON Dashboard</h1>
-    <p>veřejný přehled • cute edition</p>
+    <p>veřejný přehled • cute edition ✨</p>
   </header>
 
   <main class="container">
-    <!-- ⏱️ SUBATHON ČAS -->
+    <!-- ⏱️ TIME CARD -->
     <section class="card hero">
-      <h2>⏱️ Subathon čas</h2>
-      <div class="live-pill">🎀 LIVE FUFATHON</div>
+      <div class="hero-top">
+        <div>
+          <h2>⏱️ Subathon čas</h2>
+          <div class="live-pill">🎀 LIVE FUFATHON</div>
+        </div>
+        <div class="tiny-note muted">auto update • live timer</div>
+      </div>
 
-      <div id="timer" class="timer">00 h 00 min</div>
-      <!-- ✅ NOVÉ: LIVE HH:MM:SS -->
-      <div id="liveTime" class="live-time">00:00:00</div>
+      <div class="time-grid">
+        <div class="time-box">
+          <div class="time-label">Do konce zbývá</div>
+          <div id="timeLeftHMS" class="time-big">00:00:00</div>
+          <div id="endTime" class="end-time">Konec: —</div>
+        </div>
 
-      <div id="endTime" class="end-time">Konec: —</div>
+        <div class="time-box">
+          <div class="time-label">Už streamuju</div>
+          <div id="timeLiveHMS" class="time-big alt">00:00:00</div>
+          <div id="startTime" class="end-time">Start: —</div>
+        </div>
+      </div>
 
       <div class="progress-wrap">
         <div class="progress-label">
@@ -46,9 +56,9 @@
       </div>
     </section>
 
-    <!-- 📊 3 SLOUPCE -->
+    <!-- 📊 3 columns -->
     <div class="grid grid-3">
-      <!-- 💰 VYBRÁNO -->
+      <!-- 💰 MONEY -->
       <section class="card">
         <h3>💰 Vybráno</h3>
         <div id="money" class="money-big">0 Kč</div>
@@ -63,10 +73,13 @@
           </div>
         </div>
 
-        <p class="muted">(demo tlačítka dole jen pro testování)</p>
+        <div class="mini-badges">
+          <span class="badge">⏳ 1 Kč = 1 min</span>
+          <span class="badge">💗 cute mode</span>
+        </div>
       </section>
 
-      <!-- 🎯 GOALY -->
+      <!-- 🎯 GOALS -->
       <section class="card goals-card">
         <div class="card-head">
           <h3>🎯 Goaly</h3>
@@ -82,11 +95,11 @@
         <ul id="goalsList" class="goals-list"></ul>
 
         <p class="muted small">
-          💗 Milníky se automaticky označí podle vybraných Kč.
+          ✅ Milníky se automaticky odškrtávají podle vybraných Kč.
         </p>
       </section>
 
-      <!-- 🎁 SUBY -->
+      <!-- 🎁 SUBS + RULES -->
       <section class="card">
         <h3>🎁 Suby</h3>
 
@@ -95,8 +108,10 @@
         <div class="sub-row">T3 <span id="t3" class="pill">0</span> × (+20 min)</div>
 
         <div class="rules">
-          <h4>Pravidla</h4>
+          <h4>Pravidla přidávání času</h4>
           <ul>
+            <li>🧠 Nastavení: <b>1 Kč = 1 minuta</b></li>
+            <li class="muted">Info (jak chceš mít vidět na stránce):</li>
             <li>💗 T1 sub = +10 min</li>
             <li>💗 T2 sub = +15 min</li>
             <li>💗 T3 sub = +20 min</li>
@@ -106,11 +121,37 @@
       </section>
     </div>
 
-    <!-- 🧾 POSLEDNÍ AKCE -->
+    <!-- 🏆 TOP SUPPORTERS -->
+    <section class="card">
+      <div class="card-head">
+        <h3>🏆 Top podporovatelé</h3>
+        <span class="muted">podle Kč celkem 💜</span>
+      </div>
+
+      <div class="table-wrap">
+        <table class="table">
+          <thead>
+            <tr>
+              <th>#</th>
+              <th>Jméno</th>
+              <th>Kč celkem</th>
+              <th>Přidaný čas</th>
+            </tr>
+          </thead>
+          <tbody id="supportersBody">
+            <tr>
+              <td colspan="4" class="muted">Zatím nikdo… první top podporovatel budeš ty? 💗</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- 🧾 LAST ACTIONS -->
     <section class="card">
       <div class="card-head">
         <h3>🧾 Poslední akce</h3>
-        <span class="muted">live feed (zatím demo)</span>
+        <span class="muted">suby + donates (zatím demo)</span>
       </div>
 
       <ul id="events" class="events">
@@ -118,36 +159,39 @@
       </ul>
     </section>
 
-    <!-- ✅ NOVÉ: 🏆 TOP DONÁTOŘI -->
+    <!-- 🔗 SOCIALS -->
     <section class="card">
       <div class="card-head">
-        <h3>🏆 Top donátoři</h3>
-        <span class="muted">live (zatím demo)</span>
+        <h3>🔗 Moje socials</h3>
+        <span class="muted">klikni a pošli lásku ✨</span>
       </div>
 
-      <ol id="topDonors" class="top-donors">
-        <li class="muted">Zatím nikdo… první top donátor budeš ty? 💗</li>
-      </ol>
+      <div class="socials">
+        <a class="social ig" href="https://instagram.com/fufinkaa" target="_blank" rel="noreferrer">📸 Instagram</a>
+        <a class="social tw" href="https://twitch.tv/fufinkaa" target="_blank" rel="noreferrer">🟣 Twitch</a>
+        <a class="social yt" href="https://youtube.com/" target="_blank" rel="noreferrer">▶️ YouTube</a>
+      </div>
+
+      <p class="muted small">Pokud chceš, přepíšu odkazy na přesné URL (YouTube kanál atd.).</p>
     </section>
 
-    <!-- 🧪 DEMO OVLÁDÁNÍ -->
+    <!-- 🧪 DEMO CONTROLS (zatím) -->
     <section class="card">
-      <h3>🧪 Demo ovládání</h3>
+      <h3>🧪 Demo ovládání (zatím)</h3>
       <div class="demo-buttons">
-        <!-- ✅ NOVÉ: data-action -->
         <button data-action="t1">+ T1 sub (+10 min)</button>
         <button data-action="t2">+ T2 sub (+15 min)</button>
         <button data-action="t3">+ T3 sub (+20 min)</button>
-        <button data-action="donate100">+ Donate 100 Kč (+15 min)</button>
+        <button data-action="donate">+ Donate (zadej Kč) 💰</button>
         <button data-action="reset" class="ghost">Reset (demo)</button>
       </div>
+
       <p class="muted small">
-        Až budeme napojovat StreamElements, tyhle demo tlačítka nebudeme potřebovat.
+        Až bude hotový layout, napojíme StreamElements a tohle nebude potřeba.
       </p>
     </section>
   </main>
 
-  <!-- 📜 SCRIPT -->
   <script src="/subathon-dashboard/script.js"></script>
 </body>
 </html>
