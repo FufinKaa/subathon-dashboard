@@ -1,5 +1,5 @@
 /* =========================================================
-   FUFATHON Dashboard – script.js
+   FUFATHON Dashboard – script.js (SPRÁVNĚ: 100 Kč = 15 min)
    - Time left / Time live
    - Money + Goals auto-check
    - Top supporters (by Kč total)
@@ -8,13 +8,14 @@
    - Demo controls (zatím)
    ========================================================= */
 
-const STORAGE_KEY = "fufathon_state_v2";
+const STORAGE_KEY = "fufathon_state_v3";
 const MONEY_GOAL = 200000;
 
-// ✅ Nastavení: 1 Kč = 1 minuta
-const DONATION_MINUTES_PER_KC = 1;
+// ✅ Správné nastavení donate času:
+// 100 Kč = 15 minut  => 1 Kč = 0.15 min => 9 sekund
+const DONATION_SECONDS_PER_KC = 9;
 
-// Subs time rules
+// Subs time rules (fixní)
 const SUB_MINUTES = { t1: 10, t2: 15, t3: 20 };
 
 // Goals (tvůj seznam)
@@ -78,7 +79,7 @@ function escapeHtml(str){
 // ---------- State ----------
 function defaultState(){
   const start = now();
-  const initialMinutes = 6 * 60; // ✅ default start: 6 hodin (můžeš změnit)
+  const initialMinutes = 6 * 60; // default start: 6 hodin (změň kdykoliv)
   return {
     startedAt: start,
     endsAt: start + initialMinutes * 60 * 1000,
@@ -93,7 +94,7 @@ function defaultState(){
       { ts: start, text: "💗✨ FUFATHON je LIVE – čekám na první sub/donate 💜" }
     ],
 
-    // supporters by donations: [{ user, totalKc, addedMin }]
+    // supporters by donations: [{ user, totalKc, addedSec }]
     supporters: [],
 
     theme: "dark"
@@ -160,19 +161,19 @@ function renderEvents(){
 }
 
 // ---------- Top supporters ----------
-function upsertSupporter(user, amountKc, addedMinutes){
+function upsertSupporter(user, amountKc, addedSec){
   const name = (user || "Anonym").trim();
   const amt = Number(amountKc) || 0;
-  const addMin = Number(addedMinutes) || 0;
+  const addSec = Number(addedSec) || 0;
 
   if(amt <= 0) return;
 
   const found = state.supporters.find(s => s.user.toLowerCase() === name.toLowerCase());
   if(found){
     found.totalKc += amt;
-    found.addedMin += addMin;
+    found.addedSec += addSec;
   }else{
-    state.supporters.push({ user: name, totalKc: amt, addedMin: addMin });
+    state.supporters.push({ user: name, totalKc: amt, addedSec: addSec });
   }
 
   state.supporters.sort((a,b) => b.totalKc - a.totalKc);
@@ -194,14 +195,17 @@ function renderSupporters(){
     return;
   }
 
-  body.innerHTML = state.supporters.map((s, i) => `
-    <tr>
-      <td>${i+1}</td>
-      <td>${escapeHtml(s.user)}</td>
-      <td>${Number(s.totalKc).toLocaleString("cs-CZ")} Kč</td>
-      <td>+${Number(s.addedMin).toLocaleString("cs-CZ")} min</td>
-    </tr>
-  `).join("");
+  body.innerHTML = state.supporters.map((s, i) => {
+    const addedMin = Math.round(s.addedSec / 60);
+    return `
+      <tr>
+        <td>${i+1}</td>
+        <td>${escapeHtml(s.user)}</td>
+        <td>${Number(s.totalKc).toLocaleString("cs-CZ")} Kč</td>
+        <td>+${addedMin.toLocaleString("cs-CZ")} min</td>
+      </tr>
+    `;
+  }).join("");
 }
 
 // ---------- Money + Goals ----------
@@ -240,7 +244,6 @@ function renderGoals(){
 
   if(!listEl) return;
 
-  // find next goal
   const next = GOALS.find(g => state.money < g.amount);
 
   listEl.innerHTML = GOALS.map(g => {
@@ -266,21 +269,39 @@ function renderSubs(){
   if($("t3")) $("t3").textContent = String(state.t3);
 }
 
-function addMinutesToTimer(minutes){
-  const addMin = Number(minutes) || 0;
-  if(addMin <= 0) return;
+function addSecondsToTimer(seconds){
+  const addSec = Number(seconds) || 0;
+  if(addSec <= 0) return;
 
   // když už doběhlo, nejdřív dorovnáme na teď
   if(state.endsAt < now()) state.endsAt = now();
 
-  state.endsAt += addMin * 60 * 1000;
+  state.endsAt += addSec * 1000;
   saveState();
 }
 
+function addMinutesToTimer(minutes){
+  const addMin = Number(minutes) || 0;
+  if(addMin <= 0) return;
+  addSecondsToTimer(addMin * 60);
+}
+
 function handleSub(tier){
-  if(tier === 1){ state.t1 += 1; addMinutesToTimer(SUB_MINUTES.t1); pushEvent(`🎁 T1 sub (+${SUB_MINUTES.t1} min) 💗`); }
-  if(tier === 2){ state.t2 += 1; addMinutesToTimer(SUB_MINUTES.t2); pushEvent(`🎁 T2 sub (+${SUB_MINUTES.t2} min) 💗`); }
-  if(tier === 3){ state.t3 += 1; addMinutesToTimer(SUB_MINUTES.t3); pushEvent(`🎁 T3 sub (+${SUB_MINUTES.t3} min) 💗`); }
+  if(tier === 1){
+    state.t1 += 1;
+    addMinutesToTimer(SUB_MINUTES.t1);
+    pushEvent(`🎁 T1 sub (+${SUB_MINUTES.t1} min) 💗`);
+  }
+  if(tier === 2){
+    state.t2 += 1;
+    addMinutesToTimer(SUB_MINUTES.t2);
+    pushEvent(`🎁 T2 sub (+${SUB_MINUTES.t2} min) 💗`);
+  }
+  if(tier === 3){
+    state.t3 += 1;
+    addMinutesToTimer(SUB_MINUTES.t3);
+    pushEvent(`🎁 T3 sub (+${SUB_MINUTES.t3} min) 💗`);
+  }
 
   saveState();
   renderSubs();
@@ -294,15 +315,16 @@ function handleDonation(user, amountKc){
   // money
   addMoney(amt);
 
-  // time: 1 Kč = 1 minuta
-  const addedMin = amt * DONATION_MINUTES_PER_KC;
-  addMinutesToTimer(addedMin);
+  // ✅ time: 100 Kč = 15 min => 1 Kč = 9 sekund
+  const addedSec = Math.round(amt * DONATION_SECONDS_PER_KC);
+  addSecondsToTimer(addedSec);
 
   // leaderboard
-  upsertSupporter(user || "Anonym", amt, addedMin);
+  upsertSupporter(user || "Anonym", amt, addedSec);
 
-  // feed
-  pushEvent(`💰 Donate ${amt.toLocaleString("cs-CZ")} Kč (+${addedMin} min) – děkuju! 💜`);
+  // feed (zobrazíme přidané minuty zaokrouhleně)
+  const addedMinDisplay = Math.round(addedSec / 60);
+  pushEvent(`💰 Donate ${amt.toLocaleString("cs-CZ")} Kč (+${addedMinDisplay} min) – děkuju! 💜`);
 
   party();
 }
@@ -351,7 +373,7 @@ function bindDemo(){
     if(action === "t3") return handleSub(3);
 
     if(action === "donate"){
-      const input = prompt("Kolik Kč? (nastavení: 1 Kč = 1 minuta)");
+      const input = prompt("Kolik Kč? (100 Kč = 15 min)");
       if(input === null) return;
       const amt = Number(String(input).replace(",", "."));
       if(!amt || amt <= 0) return alert("Zadej číslo > 0 🙂");
