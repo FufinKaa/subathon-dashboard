@@ -402,6 +402,23 @@ function renderAll(){
   renderEvents();
   renderSupporters();
 }
+// =====================================
+// StreamElements → FUFATHON listener
+// =====================================
+window.addEventListener("message", (event) => {
+  const data = event.data;
+  if (!data || data.source !== "FUFATHON") return;
+
+  // 💰 DONATE
+  if (data.type === "donation") {
+    handleDonation(data.payload.name, data.payload.amount);
+  }
+
+  // 🎁 SUB
+  if (data.type === "sub") {
+    handleSub(data.payload.tier);
+  }
+});
 
 (function init(){
   applyTheme(state.theme || "dark");
