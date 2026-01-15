@@ -430,3 +430,24 @@ window.addEventListener("message", (event) => {
   // smooth timers
   setInterval(renderTime, 250);
 })();
+
+// =====================================
+// StreamElements → FUFATHON listener
+// =====================================
+window.addEventListener("message", (event) => {
+  const data = event.data;
+  if (!data || data.source !== "FUFATHON") return;
+
+  // (volitelně) bezpečnost: povolit jen StreamElements
+  // pokud by to dělalo problém, smažeme tenhle if
+  if (!String(event.origin).includes("streamelements.com")) return;
+
+  if (data.type === "donation") {
+    handleDonation(data.payload.name, data.payload.amount);
+  }
+
+  if (data.type === "sub") {
+    handleSub(data.payload.tier);
+  }
+});
+
