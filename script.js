@@ -1,3 +1,9 @@
+// =====================
+// REMOTE MODE (Cloudflare Worker API)
+// =====================
+const API_BASE = "https://fufathon-api.pajujka191.workers.dev";
+const REMOTE_MODE = true; // true = čte stav z API, false = demo/localStorage
+
 /* =========================================================
    FUFATHON Dashboard – script.js (SPRÁVNĚ: 100 Kč = 15 min)
    - Time left / Time live
