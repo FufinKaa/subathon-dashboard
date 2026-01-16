@@ -127,8 +127,10 @@ function loadState(){
 }
 
 function saveState(){
+  if (REMOTE_MODE) return;
   localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
 }
+
 
 // ---------- Theme ----------
 function applyTheme(theme){
