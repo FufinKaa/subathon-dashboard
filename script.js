@@ -1,27 +1,28 @@
+/* =========================================================
+   FUFATHON Dashboard – script.js (REMOTE MODE via Worker API)
+   - Time left / Time live (z API)
+   - Money + Goals auto-check (z API)
+   - Top supporters (z API)
+   - Last actions (z API)
+   - Cute theme toggle (lokálně uložené)
+   ========================================================= */
+
 // =====================
 // REMOTE MODE (Cloudflare Worker API)
 // =====================
 const API_BASE = "https://fufathon-api.pajujka191.workers.dev";
 const REMOTE_MODE = true; // true = čte stav z API, false = demo/localStorage
 
-/* =========================================================
-   FUFATHON Dashboard – script.js (SPRÁVNĚ: 100 Kč = 15 min)
-   - Time left / Time live
-   - Money + Goals auto-check
-   - Top supporters (by Kč total)
-   - Last actions (subs + donations)
-   - Cute theme toggle
-   - Demo controls (zatím)
-   ========================================================= */
+const STORAGE_KEY = "fufathon_state_v3"; // používá se jen když REMOTE_MODE=false
+const THEME_KEY = "fufathon_theme_v1";
 
-const STORAGE_KEY = "fufathon_state_v3";
 const MONEY_GOAL = 200000;
 
-// ✅ Správné nastavení donate času:
-// 100 Kč = 15 minut  => 1 Kč = 0.15 min => 9 sekund
+// ✅ 100 Kč = 15 minut  => 1 Kč = 0.15 min => 9 sekund
+// (v REMOTE MODE tohle řeší backend, tady je to jen pro demo režim)
 const DONATION_SECONDS_PER_KC = 9;
 
-// Subs time rules (fixní)
+// Subs time rules (fixní) (v REMOTE MODE řeší backend, tady jen pro demo)
 const SUB_MINUTES = { t1: 10, t2: 15, t3: 20 };
 
 // Goals (tvůj seznam)
@@ -85,7 +86,7 @@ function escapeHtml(str){
 // ---------- State ----------
 function defaultState(){
   const start = now();
-  const initialMinutes = 6 * 60; // default start: 6 hodin (změň kdykoliv)
+  const initialMinutes = 6 * 60; // default start: 6 hodin
   return {
     startedAt: start,
     endsAt: start + initialMinutes * 60 * 1000,
@@ -95,12 +96,10 @@ function defaultState(){
     t2: 0,
     t3: 0,
 
-    // events: newest first
     events: [
       { ts: start, text: "💗✨ FUFATHON je LIVE – čekám na první sub/donate 💜" }
     ],
 
-    // supporters by donations: [{ user, totalKc, addedSec }]
     supporters: [],
 
     theme: "dark"
@@ -110,6 +109,14 @@ function defaultState(){
 let state = loadState();
 
 function loadState(){
+  // REMOTE MODE: nebereme subathon data z localStorage
+  if (REMOTE_MODE) {
+    const s = defaultState();
+    const savedTheme = localStorage.getItem(THEME_KEY);
+    if (savedTheme === "light" || savedTheme === "dark") s.theme = savedTheme;
+    return s;
+  }
+
   try{
     const raw = localStorage.getItem(STORAGE_KEY);
     if(!raw) return defaultState();
@@ -127,10 +134,10 @@ function loadState(){
 }
 
 function saveState(){
+  // V REMOTE MODE neukládáme subathon data do localStorage
   if (REMOTE_MODE) return;
   localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
 }
-
 
 // ---------- Theme ----------
 function applyTheme(theme){
@@ -138,6 +145,11 @@ function applyTheme(theme){
   const btn = $("themeToggle");
   if(btn) btn.textContent = theme === "light" ? "☀️" : "🌙";
   state.theme = theme;
+
+  // theme ukládáme lokálně vždy
+  try { localStorage.setItem(THEME_KEY, theme); } catch {}
+
+  // v DEMO režimu ukládáme celý state
   saveState();
 }
 
@@ -204,7 +216,7 @@ function renderSupporters(){
   }
 
   body.innerHTML = state.supporters.map((s, i) => {
-    const addedMin = Math.round(s.addedSec / 60);
+    const addedMin = Math.round((Number(s.addedSec) || 0) / 60);
     return `
       <tr>
         <td>${i+1}</td>
@@ -278,23 +290,27 @@ function renderSubs(){
 }
 
 function addSecondsToTimer(seconds){
+  // jen demo režim
+  if (REMOTE_MODE) return;
+
   const addSec = Number(seconds) || 0;
   if(addSec <= 0) return;
 
-  // když už doběhlo, nejdřív dorovnáme na teď
   if(state.endsAt < now()) state.endsAt = now();
-
   state.endsAt += addSec * 1000;
   saveState();
 }
 
 function addMinutesToTimer(minutes){
+  if (REMOTE_MODE) return;
   const addMin = Number(minutes) || 0;
   if(addMin <= 0) return;
   addSecondsToTimer(addMin * 60);
 }
 
 function handleSub(tier){
+  if (REMOTE_MODE) return;
+
   if(tier === 1){
     state.t1 += 1;
     addMinutesToTimer(SUB_MINUTES.t1);
@@ -317,20 +333,18 @@ function handleSub(tier){
 }
 
 function handleDonation(user, amountKc){
+  if (REMOTE_MODE) return;
+
   const amt = Number(amountKc) || 0;
   if(amt <= 0) return;
 
-  // money
   addMoney(amt);
 
-  // ✅ time: 100 Kč = 15 min => 1 Kč = 9 sekund
   const addedSec = Math.round(amt * DONATION_SECONDS_PER_KC);
   addSecondsToTimer(addedSec);
 
-  // leaderboard
   upsertSupporter(user || "Anonym", amt, addedSec);
 
-  // feed (zobrazíme přidané minuty zaokrouhleně)
   const addedMinDisplay = Math.round(addedSec / 60);
   pushEvent(`💰 Donate ${amt.toLocaleString("cs-CZ")} Kč (+${addedMinDisplay} min) – děkuju! 💜`);
 
@@ -352,7 +366,6 @@ function renderTime(){
   if(endEl) endEl.textContent = `Konec: ${new Date(state.endsAt).toLocaleString("cs-CZ")}`;
   if(startEl) startEl.textContent = `Start: ${new Date(state.startedAt).toLocaleString("cs-CZ")}`;
 
-  // time progress = elapsed / (elapsed + remaining)
   const elapsed = Math.max(0, now() - state.startedAt);
   const remaining = Math.max(0, state.endsAt - now());
   const total = Math.max(1, elapsed + remaining);
@@ -366,6 +379,8 @@ function renderTime(){
 
 // ---------- Demo controls ----------
 function bindDemo(){
+  if (REMOTE_MODE) return;
+
   const wrap = document.querySelector(".demo-buttons");
   if(!wrap) return;
 
@@ -401,6 +416,40 @@ function bindDemo(){
   });
 }
 
+// ---------- Remote fetch ----------
+async function fetchRemoteState(){
+  try{
+    const res = await fetch(`${API_BASE}/api/state`, { cache: "no-store" });
+    if(!res.ok) return;
+
+    const remote = await res.json();
+
+    state.startedAt = remote.startedAt;
+    state.endsAt = remote.endsAt;
+
+    state.money = remote.money || 0;
+    state.t1 = remote.t1 || 0;
+    state.t2 = remote.t2 || 0;
+    state.t3 = remote.t3 || 0;
+
+    if(Array.isArray(remote.lastEvents)){
+      state.events = remote.lastEvents.map(e => ({ ts: e.ts, text: e.text }));
+    }
+
+    if(Array.isArray(remote.topDonors)){
+      state.supporters = remote.topDonors.map(d => ({
+        user: d.user,
+        totalKc: d.totalKc,
+        addedSec: d.addedSec
+      }));
+    }
+
+    renderAll();
+  }catch{
+    // ignore
+  }
+}
+
 // ---------- Init ----------
 function renderAll(){
   renderTime();
@@ -410,52 +459,20 @@ function renderAll(){
   renderEvents();
   renderSupporters();
 }
-// =====================================
-// StreamElements → FUFATHON listener
-// =====================================
-window.addEventListener("message", (event) => {
-  const data = event.data;
-  if (!data || data.source !== "FUFATHON") return;
-
-  // 💰 DONATE
-  if (data.type === "donation") {
-    handleDonation(data.payload.name, data.payload.amount);
-  }
-
-  // 🎁 SUB
-  if (data.type === "sub") {
-    handleSub(data.payload.tier);
-  }
-});
 
 (function init(){
   applyTheme(state.theme || "dark");
   $("themeToggle")?.addEventListener("click", toggleTheme);
 
-  bindDemo();
+  if(!REMOTE_MODE) bindDemo();
+
   renderAll();
 
   // smooth timers
   setInterval(renderTime, 250);
+
+  if(REMOTE_MODE){
+    fetchRemoteState();
+    setInterval(fetchRemoteState, 2000);
+  }
 })();
-
-// =====================================
-// StreamElements → FUFATHON listener
-// =====================================
-window.addEventListener("message", (event) => {
-  const data = event.data;
-  if (!data || data.source !== "FUFATHON") return;
-
-  // (volitelně) bezpečnost: povolit jen StreamElements
-  // pokud by to dělalo problém, smažeme tenhle if
-  if (!String(event.origin).includes("streamelements.com")) return;
-
-  if (data.type === "donation") {
-    handleDonation(data.payload.name, data.payload.amount);
-  }
-
-  if (data.type === "sub") {
-    handleSub(data.payload.tier);
-  }
-});
-
