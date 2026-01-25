@@ -1,29 +1,14 @@
 /* =========================================================
-   FUFATHON Dashboard – script.js (REMOTE MODE via Worker API)
-   - Time left / Time live (z API)
-   - Money + Goals auto-check (z API)
-   - Top supporters (z API)
-   - Last actions (z API)
-   - Pause/Resume support (paused/pausedAt)
-   - Cute theme toggle (lokálně uložené)
+   FUFATHON Dashboard – script.js (API-driven)
+   - live time (Jak dlouho už streamuji)
+   - money + goals
+   - top 5 donors
+   - last 10 events
    ========================================================= */
 
-// =====================
-// REMOTE MODE (Cloudflare Worker API)
-// =====================
-const API_BASE = "https://fufathon-api.pajujka191.workers.dev";
-const REMOTE_MODE = true; // true = čte stav z API, false = demo/localStorage
-
-const STORAGE_KEY = "fufathon_state_v3"; // používá se jen když REMOTE_MODE=false
-const THEME_KEY = "fufathon_theme_v1";
-
+const API_STATE = "https://fufathon-api.pajujka191.workers.dev/api/state";
 const MONEY_GOAL = 200000;
 
-// demo-only (v remote módu počítá backend)
-const DONATION_SECONDS_PER_KC = 9;
-const SUB_MINUTES = { t1: 10, t2: 15, t3: 20 };
-
-// Goals
 const GOALS = [
   { amount: 5000, label: "Movie night 🎬" },
   { amount: 10000, label: "Q&A bez cenzury 😈" },
@@ -60,9 +45,7 @@ const GOALS = [
 
 const $ = (id) => document.getElementById(id);
 
-function now(){ return Date.now(); }
 function pad2(n){ return String(n).padStart(2, "0"); }
-
 function formatHMS(ms){
   const total = Math.max(0, Math.floor(ms / 1000));
   const hh = Math.floor(total / 3600);
@@ -70,157 +53,54 @@ function formatHMS(ms){
   const ss = total % 60;
   return `${pad2(hh)}:${pad2(mm)}:${pad2(ss)}`;
 }
-
 function formatMoney(kc){
   return `${Number(kc).toLocaleString("cs-CZ")} Kč`;
 }
-
 function escapeHtml(str){
   return String(str ?? "").replace(/[&<>"']/g, s => ({
     "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#039;"
   }[s]));
 }
 
-// ---------- State ----------
-function defaultState(){
-  const start = now();
-  const initialMinutes = 24 * 60; // jen fallback pro UI; reálně přepíše API
-  return {
-    startedAt: start,
-    endsAt: start + initialMinutes * 60 * 1000,
-
-    paused: false,
-    pausedAt: null,
-
-    money: 0,
-    t1: 0,
-    t2: 0,
-    t3: 0,
-
-    events: [
-      { ts: start, text: "💗✨ FUFATHON je LIVE – čekám na první sub/donate 💜" }
-    ],
-
-    supporters: [],
-    theme: "dark"
-  };
-}
-
-let state = loadState();
-
-function loadState(){
-  if (REMOTE_MODE) {
-    const s = defaultState();
-    const savedTheme = localStorage.getItem(THEME_KEY);
-    if (savedTheme === "light" || savedTheme === "dark") s.theme = savedTheme;
-    return s;
-  }
-
-  try{
-    const raw = localStorage.getItem(STORAGE_KEY);
-    if(!raw) return defaultState();
-    const parsed = JSON.parse(raw);
-    const d = defaultState();
-    return {
-      ...d,
-      ...parsed,
-      events: Array.isArray(parsed.events) ? parsed.events : d.events,
-      supporters: Array.isArray(parsed.supporters) ? parsed.supporters : d.supporters
-    };
-  }catch{
-    return defaultState();
-  }
-}
-
-function saveState(){
-  if (REMOTE_MODE) return;
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
-}
-
-// ---------- Theme ----------
-function applyTheme(theme){
-  document.documentElement.setAttribute("data-theme", theme);
+// theme toggle (light/dark)
+let theme = "dark";
+function applyTheme(t){
+  theme = t;
+  document.documentElement.setAttribute("data-theme", t);
   const btn = $("themeToggle");
-  if(btn) btn.textContent = theme === "light" ? "☀️" : "🌙";
-  state.theme = theme;
-
-  try { localStorage.setItem(THEME_KEY, theme); } catch {}
-  saveState();
+  if(btn) btn.textContent = t === "light" ? "☀️" : "🌙";
+  localStorage.setItem("fufathon_theme", t);
 }
-
 function toggleTheme(){
-  applyTheme(state.theme === "light" ? "dark" : "light");
+  applyTheme(theme === "light" ? "dark" : "light");
 }
 
-// ---------- Confetti ----------
-function party(){
-  if(typeof confetti !== "function") return;
-  confetti({ particleCount: 70, spread: 55, origin: { y: 0.65 } });
-}
-
-// ---------- Events ----------
-function renderEvents(){
-  const el = $("events");
-  if(!el) return;
-  el.innerHTML = state.events.map(ev => {
-    const t = new Date(ev.ts).toLocaleTimeString("cs-CZ", { hour: "2-digit", minute: "2-digit" });
-    return `<li><span class="muted">[${t}]</span> ${escapeHtml(ev.text)}</li>`;
-  }).join("");
-}
-
-// ---------- Top supporters ----------
-function renderSupporters(){
-  const body = $("supportersBody");
-  if(!body) return;
-
-  if(!state.supporters.length){
-    body.innerHTML = `
-      <tr>
-        <td colspan="4" class="muted">Zatím nikdo… první top podporovatel budeš ty? 💗</td>
-      </tr>`;
-    return;
-  }
-
-  body.innerHTML = state.supporters.map((s, i) => {
-    const addedMin = Math.round((Number(s.addedSec) || 0) / 60);
-    return `
-      <tr>
-        <td>${i+1}</td>
-        <td>${escapeHtml(s.user)}</td>
-        <td>${Number(s.totalKc).toLocaleString("cs-CZ")} Kč</td>
-        <td>+${addedMin.toLocaleString("cs-CZ")} min</td>
-      </tr>
-    `;
-  }).join("");
-}
-
-// ---------- Money + Goals ----------
-function renderMoney(){
+// render: money + progress
+function renderMoney(money){
   const moneyEl = $("money");
-  if(moneyEl) moneyEl.textContent = formatMoney(state.money);
+  if(moneyEl) moneyEl.textContent = formatMoney(money);
 
-  const pct = Math.min(100, Math.round((state.money / MONEY_GOAL) * 100));
-  const barEl = $("moneyProgress");
-  const textEl = $("moneyProgressText");
-  if(barEl) barEl.style.width = `${pct}%`;
-  if(textEl) textEl.textContent = `${state.money.toLocaleString("cs-CZ")} / ${MONEY_GOAL.toLocaleString("cs-CZ")} Kč`;
+  const pct = Math.min(100, Math.round((money / MONEY_GOAL) * 100));
+  if($("moneyProgress")) $("moneyProgress").style.width = `${pct}%`;
+  if($("moneyProgressText")) $("moneyProgressText").textContent =
+    `${Number(money).toLocaleString("cs-CZ")} / ${MONEY_GOAL.toLocaleString("cs-CZ")} Kč`;
 }
 
-function renderGoals(){
-  const summaryEl = $("goalsSummary");
-  const progEl = $("goalsProgress");
+// render: goals list
+function renderGoals(money){
+  if($("goalsSummary")) $("goalsSummary").textContent =
+    `${Number(money).toLocaleString("cs-CZ")} / ${MONEY_GOAL.toLocaleString("cs-CZ")} Kč`;
+
+  const pct = Math.min(100, Math.round((money / MONEY_GOAL) * 100));
+  if($("goalsProgress")) $("goalsProgress").style.width = `${pct}%`;
+
   const listEl = $("goalsList");
-
-  if(summaryEl) summaryEl.textContent = `${state.money.toLocaleString("cs-CZ")} / ${MONEY_GOAL.toLocaleString("cs-CZ")} Kč`;
-  const pct = Math.min(100, Math.round((state.money / MONEY_GOAL) * 100));
-  if(progEl) progEl.style.width = `${pct}%`;
-
   if(!listEl) return;
 
-  const next = GOALS.find(g => state.money < g.amount);
+  const next = GOALS.find(g => money < g.amount);
 
   listEl.innerHTML = GOALS.map(g => {
-    const reached = state.money >= g.amount;
+    const reached = money >= g.amount;
     const isNext = next && next.amount === g.amount;
 
     return `
@@ -235,100 +115,112 @@ function renderGoals(){
   }).join("");
 }
 
-// ---------- Subs ----------
-function renderSubs(){
-  if($("t1")) $("t1").textContent = String(state.t1);
-  if($("t2")) $("t2").textContent = String(state.t2);
-  if($("t3")) $("t3").textContent = String(state.t3);
-}
+// render: supporters top5
+function renderSupporters(topDonors){
+  const body = $("supportersBody");
+  if(!body) return;
 
-// ---------- Time render (PAUSE AWARE) ----------
-function renderTime(){
-  const nowMs = now();
-  const effectiveNowMs = (state.paused && state.pausedAt) ? state.pausedAt : nowMs;
-
-  const leftMs = state.endsAt - effectiveNowMs;
-  const liveMs = effectiveNowMs - state.startedAt;
-
-  const leftEl = $("timeLeftHMS");
-  const liveEl = $("timeLiveHMS");
-  if(leftEl) leftEl.textContent = formatHMS(leftMs);
-  if(liveEl) liveEl.textContent = formatHMS(liveMs);
-
-  const endEl = $("endTime");
-  const startEl = $("startTime");
-  if(endEl) endEl.textContent = `Konec: ${new Date(state.endsAt).toLocaleString("cs-CZ")}`;
-  if(startEl) startEl.textContent = `Start: ${new Date(state.startedAt).toLocaleString("cs-CZ")}`;
-
-  const elapsed = Math.max(0, effectiveNowMs - state.startedAt);
-  const remaining = Math.max(0, state.endsAt - effectiveNowMs);
-  const total = Math.max(1, elapsed + remaining);
-  const pct = Math.round((elapsed / total) * 100);
-
-  const barEl = $("timeProgress");
-  const textEl = $("timeProgressText");
-  if(barEl) barEl.style.width = `${pct}%`;
-  if(textEl) textEl.textContent = `${pct}%`;
-}
-
-// ---------- Remote fetch ----------
-async function fetchRemoteState(){
-  try{
-    const res = await fetch(`${API_BASE}/api/state`, { cache: "no-store" });
-    if(!res.ok) return;
-
-    const remote = await res.json();
-
-    state.startedAt = remote.startedAt;
-    state.endsAt = remote.endsAt;
-
-    state.paused = !!remote.paused;
-    state.pausedAt = remote.pausedAt || null;
-
-    state.money = remote.money || 0;
-    state.t1 = remote.t1 || 0;
-    state.t2 = remote.t2 || 0;
-    state.t3 = remote.t3 || 0;
-
-    if(Array.isArray(remote.lastEvents)){
-      state.events = remote.lastEvents.map(e => ({ ts: e.ts, text: e.text }));
-    }
-
-    if(Array.isArray(remote.topDonors)){
-      state.supporters = remote.topDonors.map(d => ({
-        user: d.user,
-        totalKc: d.totalKc,
-        addedSec: d.addedSec
-      }));
-    }
-
-    renderAll();
-  }catch{
-    // ignore
+  if(!Array.isArray(topDonors) || !topDonors.length){
+    body.innerHTML = `
+      <tr>
+        <td colspan="4" class="muted">Zatím nikdo… první top podporovatel budeš ty? 💗</td>
+      </tr>`;
+    return;
   }
+
+  body.innerHTML = topDonors.map((s, i) => {
+    const addedMin = Math.round((Number(s.addedSec) || 0) / 60);
+    const total = Number(s.totalKc) || 0;
+    return `
+      <tr>
+        <td>${i+1}</td>
+        <td>${escapeHtml(s.user || "Anonym")}</td>
+        <td>${total.toLocaleString("cs-CZ")} Kč</td>
+        <td>+${addedMin.toLocaleString("cs-CZ")} min</td>
+      </tr>
+    `;
+  }).join("");
 }
 
-// ---------- Init ----------
-function renderAll(){
-  renderTime();
-  renderMoney();
-  renderGoals();
-  renderSubs();
-  renderEvents();
-  renderSupporters();
+// render: last events (10)
+function renderEvents(events){
+  const el = $("events");
+  if(!el) return;
+
+  if(!Array.isArray(events) || !events.length){
+    el.innerHTML = `<li class="muted">Zatím nic…</li>`;
+    return;
+  }
+
+  el.innerHTML = events.slice(0,10).map(ev => {
+    const t = new Date(ev.ts).toLocaleTimeString("cs-CZ", { hour:"2-digit", minute:"2-digit" });
+    return `<li><span class="muted">[${t}]</span> ${escapeHtml(ev.text)}</li>`;
+  }).join("");
+}
+
+// render: live time
+function renderLiveTime(startedAt, paused, pausedAt){
+  const startEl = $("startTime");
+  if(startEl) startEl.textContent = `Start: ${new Date(startedAt).toLocaleString("cs-CZ")}`;
+
+  const pauseState = $("pauseState");
+  const pauseInfo = $("pauseInfo");
+
+  if(paused){
+    if(pauseState) pauseState.textContent = "PAUZA";
+    if(pauseInfo) pauseInfo.textContent = pausedAt ? `Pozastaveno: ${new Date(pausedAt).toLocaleString("cs-CZ")}` : "Pozastaveno";
+  }else{
+    if(pauseState) pauseState.textContent = "BĚŽÍ";
+    if(pauseInfo) pauseInfo.textContent = "—";
+  }
+
+  const effectiveNow = (paused && pausedAt) ? pausedAt : Date.now();
+  const liveMs = Math.max(0, effectiveNow - startedAt);
+
+  const liveEl = $("timeLiveHMS");
+  if(liveEl) liveEl.textContent = formatHMS(liveMs);
+}
+
+// fetch loop
+let lastState = null;
+
+async function fetchState(){
+  const res = await fetch(API_STATE, { cache: "no-store" });
+  if(!res.ok) throw new Error(`API error ${res.status}`);
+  return res.json();
+}
+
+function renderAll(s){
+  const money = Number(s.money) || 0;
+  renderMoney(money);
+  renderGoals(money);
+  renderSupporters(s.topDonors || []);
+  renderEvents(s.lastEvents || []);
+  renderLiveTime(Number(s.startedAt) || Date.now(), !!s.paused, s.pausedAt ?? null);
+}
+
+async function tick(){
+  try{
+    const s = await fetchState();
+    lastState = s;
+    renderAll(s);
+  }catch(err){
+    console.log("[FUFATHON] state fetch error:", err);
+  }finally{
+    // live timer plynule i když API zrovna padne
+    if(lastState){
+      renderLiveTime(Number(lastState.startedAt) || Date.now(), !!lastState.paused, lastState.pausedAt ?? null);
+    }
+  }
 }
 
 (function init(){
-  applyTheme(state.theme || "dark");
+  applyTheme(localStorage.getItem("fufathon_theme") || "dark");
   $("themeToggle")?.addEventListener("click", toggleTheme);
 
-  renderAll();
-
-  // smooth timer UI
-  setInterval(renderTime, 250);
-
-  if(REMOTE_MODE){
-    fetchRemoteState();
-    setInterval(fetchRemoteState, 2000);
-  }
+  tick();
+  setInterval(tick, 2000);         // data refresh
+  setInterval(() => {              // smooth live time
+    if(lastState) renderLiveTime(Number(lastState.startedAt) || Date.now(), !!lastState.paused, lastState.pausedAt ?? null);
+  }, 250);
 })();
