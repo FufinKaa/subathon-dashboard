@@ -1,149 +1,153 @@
-<!DOCTYPE html>
-<html lang="cs" data-theme="dark">
+<!doctype html>
+<html lang="cs">
 <head>
-  <meta charset="UTF-8" />
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title>FUFATHON Dashboard</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <link rel="stylesheet" href="/subathon-dashboard/style.css" />
+  <link rel="stylesheet" href="./style.css" />
 </head>
-
 <body>
-  <button id="themeToggle" class="theme-toggle" aria-label="Přepnout motiv">🌙</button>
+  <div class="bgGlow"></div>
 
-  <header class="header">
-    <h1>FUFATHON Dashboard</h1>
-    <p>veřejný přehled • cute edition ✨</p>
+  <header class="wrap header">
+    <div>
+      <h1>FUFATHON Dashboard</h1>
+      <div class="sub">veřejný přehled • cute edition ✨</div>
+    </div>
+    <div class="pill" id="livePill">🔴 LIVE</div>
   </header>
 
-  <main class="container">
-    <!-- ⏱️ LIVE TIME -->
+  <main class="wrap grid">
+    <!-- Čas -->
     <section class="card hero">
-      <div class="hero-top">
-        <div>
-          <h2>⏱️ Jak dlouho už streamuji</h2>
-          <div class="live-pill">🎀 LIVE FUFATHON</div>
-        </div>
-        <div class="tiny-note muted">auto update • live</div>
+      <div class="cardHead">
+        <h2>⏱️ Subathon čas</h2>
+        <div class="muted">auto update • live</div>
       </div>
 
-      <div class="time-grid">
-        <div class="time-box">
-          <div class="time-label">Už streamuju</div>
-          <div id="timeLiveHMS" class="time-big alt">00:00:00</div>
-          <div id="startTime" class="end-time">Start: —</div>
+      <div class="heroGrid">
+        <div class="stat">
+          <div class="label">Do konce zbývá</div>
+          <div class="big" id="timeLeft">--:--:--</div>
+          <div class="muted" id="endsAtText">Konec: —</div>
         </div>
+        <div class="stat">
+          <div class="label">Jak dlouho už streamuji</div>
+          <div class="big violet" id="timeRunning">--:--:--</div>
+          <div class="muted" id="startedAtText">Start: —</div>
+        </div>
+        <div class="stat">
+          <div class="label">Stav času</div>
+          <div class="big" id="timerState">—</div>
+          <div class="muted" id="timerHint">—</div>
+        </div>
+      </div>
 
-        <div class="time-box">
-          <div class="time-label">Stav času</div>
-          <div id="pauseState" class="time-big">BĚŽÍ</div>
-          <div id="pauseInfo" class="end-time">—</div>
+      <div class="barRow">
+        <div class="barLabel">Progress času</div>
+        <div class="bar">
+          <div class="barFill" id="timeProgress"></div>
+        </div>
+        <div class="barPct" id="timePct">0%</div>
+      </div>
+    </section>
+
+    <!-- Vybráno -->
+    <section class="card">
+      <div class="cardHead">
+        <h2>💰 Vybráno</h2>
+        <div class="muted">donates + (volitelně) další</div>
+      </div>
+
+      <div class="money" id="money">0 Kč</div>
+      <div class="muted" id="moneySmall">0 / 200 000 Kč</div>
+
+      <div class="bar">
+        <div class="barFill" id="moneyProgress"></div>
+      </div>
+
+      <div class="miniRow">
+        <div class="mini">
+          <div class="miniLabel">Suby celkem</div>
+          <div class="miniVal" id="subsTotal">0</div>
+        </div>
+        <div class="mini">
+          <div class="miniLabel">T1 / T2 / T3</div>
+          <div class="miniVal" id="subsBreak">0 / 0 / 0</div>
         </div>
       </div>
     </section>
 
-    <div class="grid grid-3">
-      <!-- 💰 MONEY -->
-      <section class="card">
-        <h3>💰 Vybráno</h3>
-        <div id="money" class="money-big">0 Kč</div>
-
-        <div class="progress-wrap">
-          <div class="progress-label">
-            <span>Cíl</span>
-            <span id="moneyProgressText">0 / 200 000 Kč</span>
-          </div>
-          <div class="bar">
-            <div id="moneyProgress" class="bar-fill"></div>
-          </div>
-        </div>
-      </section>
-
-      <!-- 🎯 GOALS -->
-      <section class="card goals-card">
-        <div class="card-head">
-          <h3>🎯 Goaly</h3>
-          <span id="goalsSummary" class="pill">0 / 200 000 Kč</span>
-        </div>
-
-        <div class="goal-progress">
-          <div class="bar">
-            <div id="goalsProgress" class="bar-fill"></div>
-          </div>
-        </div>
-
-        <ul id="goalsList" class="goals-list"></ul>
-
-        <p class="muted small">✅ Milníky se automaticky odškrtávají podle vybraných Kč.</p>
-      </section>
-
-      <!-- 📜 RULES -->
-      <section class="card">
-        <h3>📜 Pravidla přidávání času</h3>
-        <div class="rules">
-          <ul>
-            <li>💗 T1 sub = +10 min</li>
-            <li>💗 T2 sub = +15 min</li>
-            <li>💗 T3 sub = +20 min</li>
-            <li>💗 100 Kč donate = +15 min</li>
-          </ul>
-        </div>
-        <p class="muted small">Pozn.: donate přičítá i za 67 Kč atd. (proporčně).</p>
-      </section>
-    </div>
-
-    <!-- 🏆 TOP SUPPORTERS -->
+    <!-- Pravidla -->
     <section class="card">
-      <div class="card-head">
-        <h3>🏆 Top 5 podporovatelů</h3>
-        <span class="muted">podle Kč celkem 💜</span>
+      <div class="cardHead">
+        <h2>📜 Pravidla přidávání času</h2>
+        <div class="muted">automaticky</div>
       </div>
-
-      <div class="table-wrap">
-        <table class="table">
-          <thead>
-            <tr>
-              <th>#</th>
-              <th>Jméno</th>
-              <th>Kč celkem</th>
-              <th>Přidaný čas</th>
-            </tr>
-          </thead>
-          <tbody id="supportersBody">
-            <tr>
-              <td colspan="4" class="muted">Zatím nikdo… první top podporovatel budeš ty? 💗</td>
-            </tr>
-          </tbody>
-        </table>
-      </div>
-    </section>
-
-    <!-- 🧾 LAST ACTIONS -->
-    <section class="card">
-      <div class="card-head">
-        <h3>🧾 Poslední akce</h3>
-        <span class="muted">posledních 10</span>
-      </div>
-
-      <ul id="events" class="events">
-        <li>💗✨ FUFATHON je LIVE – čekám na první sub/donate 💜</li>
+      <ul class="rules">
+        <li>💗 T1 sub = <b>+10 min</b></li>
+        <li>💗 T2 sub = <b>+15 min</b></li>
+        <li>💗 T3 sub = <b>+20 min</b></li>
+        <li>💗 100 Kč donate = <b>+15 min</b> (poměrově)</li>
       </ul>
     </section>
 
-    <!-- 🔗 SOCIALS -->
-    <section class="card">
-      <div class="card-head">
-        <h3>🔗 Moje socials</h3>
-        <span class="muted">klikni a pošli lásku ✨</span>
+    <!-- Goaly -->
+    <section class="card goals">
+      <div class="cardHead">
+        <h2>🎯 Goaly</h2>
+        <div class="muted"><span id="goalHeader">0 / 200 000 Kč</span></div>
+      </div>
+
+      <div class="bar">
+        <div class="barFill" id="goalBar"></div>
+      </div>
+
+      <div class="goalList" id="goalList"></div>
+      <div class="muted tiny">✅ Milníky se automaticky odškrtávají podle vybraných Kč.</div>
+    </section>
+
+    <!-- Top 5 -->
+    <section class="card wide">
+      <div class="cardHead">
+        <h2>🏆 Top 5 podporovatelů</h2>
+        <div class="muted">podle Kč celkem 💜</div>
+      </div>
+
+      <div class="table" id="topTable">
+        <!-- render -->
+      </div>
+    </section>
+
+    <!-- Poslední akce -->
+    <section class="card wide">
+      <div class="cardHead">
+        <h2>🧾 Poslední akce</h2>
+        <div class="muted">posledních 10</div>
+      </div>
+
+      <div class="feed" id="feed">
+        <!-- render -->
+      </div>
+    </section>
+
+    <!-- Socials -->
+    <section class="card wide">
+      <div class="cardHead">
+        <h2>🔗 Moje socials</h2>
+        <div class="muted">klikni a pošli lásku ✨</div>
       </div>
 
       <div class="socials">
-        <a class="social ig" href="https://instagram.com/fufinka.a" target="_blank" rel="noreferrer">📸 Instagram</a>
+        <a class="social ig" href="https://instagram.com/" target="_blank" rel="noreferrer">📸 Instagram</a>
         <a class="social tw" href="https://twitch.tv/fufinkaa" target="_blank" rel="noreferrer">🟣 Twitch</a>
-        <a class="social yt" href="https://www.youtube.com/@FufinKa" target="_blank" rel="noreferrer">▶️ YouTube</a>
+        <a class="social yt" href="https://youtube.com/" target="_blank" rel="noreferrer">▶️ YouTube</a>
       </div>
+
+      <div class="muted tiny">Pozn.: Twitch “LIVE” můžeme později napojit přes Twitch API (Client ID), teď je to link.</div>
     </section>
   </main>
 
-  <script src="/subathon-dashboard/script.js"></script>
+  <script src="./script.js"></script>
 </body>
 </html>
