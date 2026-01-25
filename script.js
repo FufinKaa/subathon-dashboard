@@ -1,9 +1,7 @@
 const API_STATE = "https://fufathon-api.pajujka191.workers.dev/api/state";
 
-// Goal target
 const GOAL_TOTAL = 200000;
 
-// Tvoje milníky (můžeš dál doplnit)
 const GOALS = [
   { amount: 5000,  title: "Movie night 🎬", sub: "další na řadě ✨" },
   { amount: 10000, title: "Q&A bez cenzury 😈", sub: "čeká…" },
@@ -18,9 +16,7 @@ const GOALS = [
 function fmtMoney(n){
   return `${Math.round(n).toLocaleString("cs-CZ")} Kč`;
 }
-
 function pad(n){ return String(n).padStart(2,"0"); }
-
 function fmtHMS(sec){
   sec = Math.max(0, Math.floor(sec));
   const h = Math.floor(sec/3600);
@@ -28,27 +24,45 @@ function fmtHMS(sec){
   const s = sec%60;
   return `${pad(h)}:${pad(m)}:${pad(s)}`;
 }
-
 function fmtTime(ts){
   const d = new Date(ts);
   return `${pad(d.getHours())}:${pad(d.getMinutes())}`;
 }
-
 function fmtDateTime(ts){
   const d = new Date(ts);
   return `${d.toLocaleDateString("cs-CZ")} ${pad(d.getHours())}:${pad(d.getMinutes())}:${pad(d.getSeconds())}`;
 }
 
-/**
- * Sloučení event feedu:
- * - Gift recipient eventy (kind:"gift") sloučíme, když:
- *   - jsou blízko u sebe (např. do 8s)
- *   - mají stejného sendera (gifter) a tier
- * - Výsledek: 1 řádek "🎁 Grunwick daroval 5× T1 (+50 min)"
- */
+/* ====== THEME TOGGLE ====== */
+function applyTheme(theme){
+  const isLight = theme === "light";
+  document.body.classList.toggle("theme-light", isLight);
+
+  const icon = document.getElementById("themeIcon");
+  const text = document.getElementById("themeText");
+
+  if (icon) icon.textContent = isLight ? "🌞" : "🌙";
+  if (text) text.textContent = isLight ? "Den" : "Noc";
+}
+
+function initTheme(){
+  const saved = localStorage.getItem("fufathon_theme");
+  const theme = saved || "dark";
+  applyTheme(theme);
+
+  const btn = document.getElementById("themeBtn");
+  if (btn){
+    btn.addEventListener("click", ()=>{
+      const nowLight = document.body.classList.contains("theme-light");
+      const next = nowLight ? "dark" : "light";
+      localStorage.setItem("fufathon_theme", next);
+      applyTheme(next);
+    });
+  }
+}
+
 function buildPrettyFeed(lastEvents, limit = 10){
   const events = (lastEvents || []).slice().sort((a,b)=>b.ts-a.ts);
-
   const out = [];
   const giftWindowMs = 8000;
 
@@ -56,12 +70,10 @@ function buildPrettyFeed(lastEvents, limit = 10){
     const e = events[i];
     if (!e) continue;
 
-    // Gift recipient
     if (e.kind === "gift") {
       const sender = (e.sender || "Anonym").toString();
       const tier = Number(e.tier) || 1;
 
-      // sloučíme i následující gift recipienty
       let count = 1;
       let j = i+1;
 
@@ -76,12 +88,9 @@ function buildPrettyFeed(lastEvents, limit = 10){
         if (sameSender && sameTier && close) {
           count += 1;
           j += 1;
-        } else {
-          break;
-        }
+        } else break;
       }
 
-      // přeskočíme ty sloučené
       i = j - 1;
 
       const mins = tier === 2 ? 15 : tier === 3 ? 20 : 10;
@@ -96,15 +105,13 @@ function buildPrettyFeed(lastEvents, limit = 10){
       continue;
     }
 
-    // Donation
     if (e.kind === "donation" && e.text) {
       out.push({ ts: e.ts, text: e.text });
       if (out.length >= limit) break;
       continue;
     }
 
-    // Sub / resub
-    if ((e.kind === "sub" || e.kind === "resub") ) {
+    if (e.kind === "sub" || e.kind === "resub") {
       const tier = Number(e.tier) || 1;
       const name = (e.sender || "Anonym").toString();
       const mins = tier === 2 ? 15 : tier === 3 ? 20 : 10;
@@ -114,11 +121,11 @@ function buildPrettyFeed(lastEvents, limit = 10){
         ts: e.ts,
         text: `${label} (T${tier}) (+${mins} min) – ${name} 💗`,
       });
+
       if (out.length >= limit) break;
       continue;
     }
 
-    // System text
     if (e.text) {
       out.push({ ts: e.ts, text: e.text });
       if (out.length >= limit) break;
@@ -216,7 +223,6 @@ async function tick(){
   const res = await fetch(API_STATE, { cache: "no-store" });
   const s = await res.json();
 
-  // Timers
   const now = Date.now();
   const effectiveNow = (s.paused && s.pausedAt) ? s.pausedAt : now;
 
@@ -229,10 +235,7 @@ async function tick(){
   document.getElementById("startedAtText").textContent = `Start: ${fmtDateTime(s.startedAt)}`;
   document.getElementById("endsAtText").textContent = `Konec: ${fmtDateTime(s.endsAt)}`;
 
-  document.getElementById("timerState").textContent = s.paused ? "PAUZA" : "BĚŽÍ";
-  document.getElementById("timerHint").textContent = s.paused ? "⏸️ čas je zastaven" : "✨ jedeme dál";
-
-  // Time progress (od startu do endsAt)
+  // Time progress
   const totalSec = Math.max(1, Math.floor((s.endsAt - s.startedAt)/1000));
   const doneSec = Math.max(0, Math.min(totalSec, Math.floor((effectiveNow - s.startedAt)/1000)));
   const pct = Math.round((doneSec/totalSec)*100);
@@ -240,7 +243,7 @@ async function tick(){
   document.getElementById("timeProgress").style.width = `${pct}%`;
   document.getElementById("timePct").textContent = `${pct}%`;
 
-  // Money + progress
+  // Money
   const money = Number(s.money) || 0;
   document.getElementById("money").textContent = fmtMoney(money);
   document.getElementById("moneySmall").textContent = `${fmtMoney(money)} / ${fmtMoney(GOAL_TOTAL)}`;
@@ -252,13 +255,9 @@ async function tick(){
   document.getElementById("subsTotal").textContent = String(s.subsTotal || 0);
   document.getElementById("subsBreak").textContent = `${s.t1||0} / ${s.t2||0} / ${s.t3||0}`;
 
-  // Goals
   renderGoals(money);
-
-  // Top
   renderTop(s.topDonors || []);
 
-  // Feed
   const pretty = buildPrettyFeed(s.lastEvents || [], 10);
   renderFeed(pretty);
 }
@@ -268,4 +267,5 @@ async function loop(){
   setTimeout(loop, 2000);
 }
 
+initTheme();
 loop();
