@@ -167,24 +167,31 @@ function renderMoneySubs(state) {
 }
 
 function renderGoals(money) {
+  const container = document.getElementById("goalList");
+  if (!container) return;
+
   const m = Number(money) || 0;
-  const html = GOALS.map((g) => {
+
+  // najdi první nedosažený goal
+  const activeIndex = GOALS.findIndex(g => m < g.amount);
+  const currentIdx = activeIndex === -1 ? GOALS.length - 1 : activeIndex;
+
+  const html = GOALS.map((g, i) => {
     const done = m >= g.amount;
+    const active = i === currentIdx && !done;
+
     return `
-      <div class="goalItem ${done ? "done" : ""}">
+      <div class="goalRow ${done ? "done" : ""} ${active ? "active" : ""}">
         <div class="goalLeft">
-          <div class="goalTitle">
-            <span class="goalCheck">${done ? "✅" : "⬜"}</span>
-            <span>${escapeHtml(g.title)}</span>
-          </div>
-          ${g.note ? `<div class="goalNote">${escapeHtml(g.note)}</div>` : ""}
+          <span class="goalCheck">${done ? "✅" : "⬜"}</span>
+          <span class="goalTitle">${g.title}</span>
         </div>
-        <div class="goalAmt">${formatKc(g.amount)} Kč</div>
+        <div class="goalAmount">${g.amount.toLocaleString("cs-CZ")} Kč</div>
       </div>
     `;
   }).join("");
 
-  setHTML("#goalList", html);
+  container.innerHTML = html;
 }
 
 function renderTopDonors(donors) {
