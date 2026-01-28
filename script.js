@@ -1,63 +1,59 @@
 // ============================
-// FUFATHON Dashboard script.js
+// FUFATHON Dashboard
 // ============================
 
 const API_STATE = "https://fufathon-api.pajujka191.workers.dev/api/state";
 const GOAL_TOTAL = 200000;
+const SE_JWT_TOKEN = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJjaXRhZGVsIiwiZXhwIjoxNzg1MTg5ODgyLCJqdGkiOiI2MzMzNDRlMS03ODkxLTQ4NjAtOTIzNC0zNmY3Y2I0YWRhMTciLCJjaGFubmVsIjoiNWJhN2M4NTY2NzE2NmQ5MTUwYjQwNmZlIiwicm9sZSI6Im93bmVyIiwiYXV0aFRva2VuIjoiYU9PQ0E1UmR3V2M2OTZ0WVJzUU1pQjRjNzZ2ZUdBUFdxN0hsYXJLczhxSHZIb2xJIiwidXNlciI6IjViYTdjODU2NjcxNjZkM2U5OGI0MDZmZCIsInVzZXJfaWQiOiIyOGE3MTNkZS00ZDAzLTQxYzQtOTliMi1hMWQ0NDY0NmY0NDkiLCJ1c2VyX3JvbGUiOiJjcmVhdG9yIiwicHJvdmlkZXIiOiJ0d2l0Y2giLCJwcm92aWRlcl9pZCI6IjI1MzExNjI5MSIsImNoYW5uZWxfaWQiOiI1NGQwNzRjYi1hODQ0LTRmMDctOWZhNC02NWVlNDRmNjJiZGUiLCJjcmVhdG9yX2lkIjoiZDU5MGJmYzMtNDgwYS00MTc0LWEyOWUtZWRlOTI1MjI3N2YyIn0.fXn27iJsOAB7u02mFzBLEEvAY1bYBM47LhMWbhJv_yg'; // ← ZDE VLOŽ TOKEN!
 
-// pravidla subů (musí sedět s workerem)
 const SUB_MINUTES = { 1: 10, 2: 20, 3: 30 };
 
-// Goaly – cute, bez dlouhých textů
 const GOALS = [
-  { amount: 5000,  icon:"🎬", title:"Movie night" },
-  { amount: 10000, icon:"😏", title:"Q&A bez cenzury" },
-  { amount: 15000, icon:"👻", title:"Horror Night" },
-  { amount: 20000, icon:"🍔", title:"Jídlo podle chatu" },
-  { amount: 25000, icon:"🤡", title:"Kostým stream" },
-  { amount: 30000, icon:"💃", title:"Just Dance" },
-  { amount: 35000, icon:"🧱", title:"Lego" },
-  { amount: 40000, icon:"🍣", title:"Asijská ochutnávka" },
-  { amount: 45000, icon:"⛏️", title:"Minecraft SpeedRun DUO" },
-  { amount: 50000, icon:"🎤", title:"Karaoke stream" },
-  { amount: 55000, icon:"🔫", title:"Battle Royale Challenge" },
-  { amount: 60000, icon:"🎳", title:"Bowling" },
-  { amount: 65000, icon:"💦", title:"Try Not To Laugh" },
-  { amount: 70000, icon:"👣", title:"Běžecký pás" },
-  { amount: 75000, icon:"🍹", title:"Drunk Stream" },
-  { amount: 80000, icon:"🧍‍♀️", title:"12h Stream ve stoje" },
-  { amount: 85000, icon:"🕹️", title:"Split Fiction w/ Juraj" },
-  { amount: 90000, icon:"🎁", title:"Mystery box opening" },
-  { amount: 95000, icon:"🏆", title:"Turnaj v LoLku" },
-  { amount: 100000, icon:"🎉", title:"Stodolní ve stylu" },
-  { amount: 110000, icon:"🏎️", title:"Motokáry" },
-  { amount: 120000, icon:"🎧", title:"ASMR stream" },
-  { amount: 125000, icon:"⚡", title:"Bolt Tower" },
-  { amount: 130000, icon:"🥶", title:"Otužování" },
-  { amount: 140000, icon:"⛳", title:"MiniGolf" },
-  { amount: 150000, icon:"🫧", title:"Vířivka" },
-  { amount: 160000, icon:"🎨", title:"Zážitkové ART studio" },
-  { amount: 170000, icon:"🐎", title:"Jízda na koni" },
-  { amount: 180000, icon:"🏔️", title:"Výšlap na Lysou horu" },
-  { amount: 190000, icon:"🖊️", title:"Tetování" },
-  { amount: 200000, icon:"🏙️", title:"Víkend v Praze" },
+  { amount: 5000, icon: "🎬", title: "Movie night" },
+  { amount: 10000, icon: "😏", title: "Q&A bez cenzury" },
+  { amount: 15000, icon: "👻", title: "Horror Night" },
+  { amount: 20000, icon: "🍔", title: "Jídlo podle chatu" },
+  { amount: 25000, icon: "🤡", title: "Kostým stream" },
+  { amount: 30000, icon: "💃", title: "Just Dance" },
+  { amount: 35000, icon: "🧱", title: "Lego" },
+  { amount: 40000, icon: "🍣", title: "Asijská ochutnávka" },
+  { amount: 45000, icon: "⛏️", title: "Minecraft SpeedRun DUO" },
+  { amount: 50000, icon: "🎤", title: "Karaoke stream" },
+  { amount: 55000, icon: "🔫", title: "Battle Royale Challenge" },
+  { amount: 60000, icon: "🎳", title: "Bowling" },
+  { amount: 65000, icon: "💦", title: "Try Not To Laugh" },
+  { amount: 70000, icon: "👣", title: "Běžecký pás" },
+  { amount: 75000, icon: "🍹", title: "Drunk Stream" },
+  { amount: 80000, icon: "🧍‍♀️", title: "12h Stream ve stoje" },
+  { amount: 85000, icon: "🕹️", title: "Split Fiction w/ Juraj" },
+  { amount: 90000, icon: "🎁", title: "Mystery box opening" },
+  { amount: 95000, icon: "🏆", title: "Turnaj v LoLku" },
+  { amount: 100000, icon: "🎉", title: "Stodolní ve stylu" },
+  { amount: 110000, icon: "🏎️", title: "Motokáry" },
+  { amount: 120000, icon: "🎧", title: "ASMR stream" },
+  { amount: 125000, icon: "⚡", title: "Bolt Tower" },
+  { amount: 130000, icon: "🥶", title: "Otužování" },
+  { amount: 140000, icon: "⛳", title: "MiniGolf" },
+  { amount: 150000, icon: "🫧", title: "Vířivka" },
+  { amount: 160000, icon: "🎨", title: "Zážitkové ART studio" },
+  { amount: 170000, icon: "🐎", title: "Jízda na koni" },
+  { amount: 180000, icon: "🏔️", title: "Výšlap na Lysou horu" },
+  { amount: 190000, icon: "🖊️", title: "Tetování" },
+  { amount: 200000, icon: "🏙️", title: "Víkend v Praze" },
 ];
 
-// ============================
-// STREAMELEMENTS KONFIGURACE
-// ============================
-// ZDE VLOŽ SVŮJ JWT TOKEN Z: StreamElements > Settings > API tokens
-const SE_JWT_TOKEN = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJjaXRhZGVsIiwiZXhwIjoxNzg1MTg5NzQ3LCJqdGkiOiJlMjU4YWRjNy04NmViLTQ1NjAtODBmZS1kMTUwOGU2ODk5NTciLCJjaGFubmVsIjoiNWJhN2M4NTY2NzE2NmQ5MTUwYjQwNmZlIiwicm9sZSI6Im93bmVyIiwiYXV0aFRva2VuIjoiYU9PQ0E1UmR3V2M2OTZ0WVJzUU1pQjRjNzZ2ZUdBUFdxN0hsYXJLczhxSHZIb2xJIiwidXNlciI6IjViYTdjODU2NjcxNjZkM2U5OGI0MDZmZCIsInVzZXJfaWQiOiIyOGE3MTNkZS00ZDAzLTQxYzQtOTliMi1hMWQ0NDY0NmY0NDkiLCJ1c2VyX3JvbGUiOiJjcmVhdG9yIiwicHJvdmlkZXIiOiJ0d2l0Y2giLCJwcm92aWRlcl9pZCI6IjI1MzExNjI5MSIsImNoYW5uZWxfaWQiOiI1NGQwNzRjYi1hODQ0LTRmMDctOWZhNC02NWVlNDRmNjJiZGUiLCJjcmVhdG9yX2lkIjoiZDU5MGJmYzMtNDgwYS00MTc0LWEyOWUtZWRlOTI1MjI3N2YyIn0.6m8xyFNGWKwywrT8iDko7C9u2GwLT-tsagsbQlirc_0';
-let seSocket = null;
-let realtimeEvents = []; // Udržuje si vlastní seznam událostí pro feed
-
+// ===== UTILITIES =====
 const $ = (sel) => document.querySelector(sel);
+const $$ = (sel) => document.querySelectorAll(sel);
 
 function formatKc(n) {
-  const num = Number(n) || 0;
-  return num.toLocaleString("cs-CZ");
+  return Number(n || 0).toLocaleString("cs-CZ");
 }
-function pad2(n) { return String(n).padStart(2, "0"); }
+
+function pad2(n) {
+  return String(n).padStart(2, "0");
+}
+
 function formatHMS(totalSec) {
   const s = Math.max(0, Math.floor(totalSec));
   const h = Math.floor(s / 3600);
@@ -65,444 +61,377 @@ function formatHMS(totalSec) {
   const sec = s % 60;
   return `${pad2(h)}:${pad2(m)}:${pad2(sec)}`;
 }
+
 function formatDateTime(ts) {
   if (!ts) return "—";
   const d = new Date(ts);
   return d.toLocaleString("cs-CZ", {
-    day: "2-digit", month: "2-digit", year: "numeric",
-    hour: "2-digit", minute: "2-digit",
+    day: "2-digit",
+    month: "2-digit",
+    year: "numeric",
+    hour: "2-digit",
+    minute: "2-digit"
   });
 }
-function clamp01(x) { return Math.max(0, Math.min(1, x)); }
 
-function setText(id, val) {
-  const el = $(id);
-  if (el) el.textContent = val;
-}
-function setWidth(id, pct) {
-  const el = $(id);
-  if (el) el.style.width = `${pct}%`;
-}
-
-// --------------------
-// Theme toggle
-// --------------------
-function applyTheme(theme) {
-  document.documentElement.setAttribute("data-theme", theme);
-  const isLight = theme === "light";
-  setText("#themeIcon", isLight ? "☀️" : "🌙");
-  setText("#themeText", isLight ? "Den" : "Noc");
-}
+// ===== THEME TOGGLE =====
 function initTheme() {
-  const saved = localStorage.getItem("fuf_theme");
-  applyTheme(saved || "dark");
-  $("#themeBtn")?.addEventListener("click", () => {
-    const current = document.documentElement.getAttribute("data-theme") || "dark";
+  const saved = localStorage.getItem("fuf_theme") || "dark";
+  document.documentElement.setAttribute("data-theme", saved);
+  
+  const icon = saved === "light" ? "☀️" : "🌙";
+  const text = saved === "light" ? "Den" : "Noc";
+  
+  $("#themeIcon").textContent = icon;
+  $("#themeText").textContent = text;
+  
+  $("#themeBtn").addEventListener("click", () => {
+    const current = document.documentElement.getAttribute("data-theme");
     const next = current === "dark" ? "light" : "dark";
+    
+    document.documentElement.setAttribute("data-theme", next);
     localStorage.setItem("fuf_theme", next);
-    applyTheme(next);
+    
+    $("#themeIcon").textContent = next === "light" ? "☀️" : "🌙";
+    $("#themeText").textContent = next === "light" ? "Den" : "Noc";
   });
 }
 
-// --------------------
-// Goals
-// --------------------
+// ===== GOALS RENDER =====
 function renderGoals(money) {
   const m = Number(money) || 0;
-
-  setText("#goalHeader", `${formatKc(m)} / ${formatKc(GOAL_TOTAL)} Kč`);
-  const gpct = Math.round(clamp01(m / GOAL_TOTAL) * 100);
-  setWidth("#goalBar", gpct);
-
   const list = $("#goalList");
   if (!list) return;
-
-  list.innerHTML = GOALS.map((g) => {
+  
+  const goalsHTML = GOALS.map(g => {
     const done = m >= g.amount;
+    const percent = Math.min(100, (m / g.amount) * 100);
+    
     return `
-      <div class="goalRow ${done ? "done" : ""}">
-        <div class="goalLeft">
-          <span class="goalCheck">${done ? "✅" : "⬜"}</span>
-          <span class="goalIcon">${g.icon || "🎯"}</span>
+      <div class="goalItem ${done ? 'done' : ''}">
+        <div class="goalHeader">
+          <span class="goalIcon">${g.icon}</span>
           <span class="goalTitle">${g.title}</span>
+          <span class="goalAmount">${formatKc(g.amount)} Kč</span>
         </div>
-        <div class="goalAmt">${formatKc(g.amount)} Kč</div>
+        <div class="goalProgress">
+          <div class="goalProgressBar" style="width: ${percent}%"></div>
+        </div>
+        <div class="goalStatus">
+          ${done ? '✅ Dokončeno' : `${formatKc(m)} / ${formatKc(g.amount)} Kč`}
+        </div>
       </div>
     `;
-  }).join("");
+  }).join('');
+  
+  list.innerHTML = goalsHTML;
+  $("#goalHeader").textContent = `${formatKc(m)} / ${formatKc(GOAL_TOTAL)} Kč`;
+  
+  const goalPercent = Math.min(100, (m / GOAL_TOTAL) * 100);
+  $("#goalBar").style.width = `${goalPercent}%`;
 }
 
-// --------------------
-// Top donors
-// --------------------
-function renderTop(donors) {
+// ===== TOP DONORS =====
+function renderTopDonors(donors) {
   const tbody = $("#topTableBody");
   if (!tbody) return;
-
-  const rows = (donors || []).slice(0, 5).map((d, i) => {
-    const user = String(d?.user || "Anonym");
-    const totalKc = Number(d?.totalKc || 0);
-    const addedSec = Number(d?.addedSec || 0);
-    const addedMin = Math.round(addedSec / 60);
-
-    return `
-      <tr>
-        <td>${i + 1}</td>
-        <td>${user}</td>
-        <td>${formatKc(totalKc)} Kč</td>
-        <td>+${addedMin} min</td>
-      </tr>
-    `;
-  }).join("");
-
+  
+  const donorsArray = donors || [];
+  const rows = donorsArray.slice(0, 5).map((donor, i) => `
+    <tr>
+      <td>${i + 1}</td>
+      <td><strong>${donor.user || "Anonym"}</strong></td>
+      <td>${formatKc(donor.totalKc || 0)} Kč</td>
+      <td>+${Math.round((donor.addedSec || 0) / 60)} min</td>
+    </tr>
+  `).join('');
+  
   tbody.innerHTML = rows || `
-    <tr><td colspan="4" class="mutedCell">Zatím nikdo… 💜</td></tr>
+    <tr>
+      <td colspan="4" class="noData">
+        Zatím žádní dárci... buď první! 💜
+      </td>
+    </tr>
   `;
 }
 
-// --------------------
-// Feed (agregace giftů) - UPRAVENO PRO REALTIME
-// --------------------
-function normalizeEvent(e) {
-  // podporuje i legacy {text}
-  return {
-    ts: e?.ts ?? Date.now(),
-    kind: e?.kind ?? null,
-    tier: e?.tier ?? null,
-    months: e?.months ?? null,
-    count: e?.count ?? 1,
-    sender: e?.sender ?? null,
-    recipient: e?.recipient ?? null,
-    amountKc: e?.amountKc ?? null,
-    text: e?.text ?? "",
-  };
-}
-
-function eventLine(ev) {
-  const t = ev.tier ? Number(ev.tier) : 1;
-  const mins = SUB_MINUTES[t] || 10;
-
-  // pokud worker poslal hotový text, použijeme ho (legacy / system)
-  if (ev.text && (!ev.kind || ev.kind === "system")) return ev.text;
-
-  if (ev.kind === "donation") {
-    return ev.text || `💰 Donate ${formatKc(ev.amountKc || 0)} Kč 💜`;
-  }
-
-  if (ev.kind === "sub") {
-    const who = ev.sender || "Anonym";
-    return `⭐ ${who} si pořídil sub (T${t}) (+${mins} min) 💗`;
-  }
-
-  if (ev.kind === "resub") {
-    const who = ev.sender || "Anonym";
-    const m = ev.months ? ` (${ev.months} měs.)` : "";
-    return `🔁 ${who} resub${m} (T${t}) (+${mins} min) 💗`;
-  }
-
-  if (ev.kind === "gift") {
-    const who = ev.sender || "Anonym";
-    const c = Number(ev.count || 1);
-    return `🎁 ${who} daroval ${c}× sub (T${t}) (+${c * mins} min) 💗`;
-  }
-
-  return ev.text || "—";
-}
-
-function renderFeed(eventsRaw) {
+// ===== ACTIVITY FEED =====
+function renderActivityFeed(events) {
   const feed = $("#feed");
   if (!feed) return;
-
-  const events = (eventsRaw || []).map(normalizeEvent);
-  const out = [];
-  const limit = 10;
-
-  // Agregace: po sobě jdoucí gift recipienty od stejného sender+tier v krátkém okně
-  for (let i = 0; i < events.length && out.length < limit; i++) {
-    const e = events[i];
-
-    if (e.kind === "gift" && e.sender) {
-      const sender = e.sender;
-      const tier = Number(e.tier || 1);
-      let count = Number(e.count || 1);
-
-      const baseTs = Number(e.ts || 0);
-      let j = i + 1;
-
-      while (j < events.length) {
-        const x = events[j];
-        const xTs = Number(x.ts || 0);
-
-        const same =
-          x.kind === "gift" &&
-          String(x.sender || "").toLowerCase() === String(sender).toLowerCase() &&
-          Number(x.tier || 1) === tier;
-
-        const inWindow = Math.abs((xTs || baseTs) - baseTs) <= 60000;
-
-        if (!same || !inWindow) break;
-
-        count += Number(x.count || 1);
-        j++;
-      }
-
-      const time = e.ts
-        ? new Date(e.ts).toLocaleTimeString("cs-CZ", { hour:"2-digit", minute:"2-digit" })
-        : "--:--";
-
-      // Pokud worker poslal už purchase s count>1, tady se to hezky vykreslí rovnou.
-      out.push({ time, text: eventLine({ ...e, count }) });
-      i = j - 1;
-      continue;
+  
+  const eventsArray = events || [];
+  const feedHTML = eventsArray.slice(0, 10).map(event => {
+    const time = event.ts ? 
+      new Date(event.ts).toLocaleTimeString("cs-CZ", { hour: "2-digit", minute: "2-digit" }) : 
+      "--:--";
+    
+    let icon = "⚡";
+    let text = event.text || "";
+    
+    if (event.kind === "donation") {
+      icon = "💰";
+      text = `Donate ${formatKc(event.amountKc)} Kč od ${event.sender}`;
+    } else if (event.kind === "sub") {
+      icon = "⭐";
+      text = `${event.sender} si pořídil sub (T${event.tier})`;
+    } else if (event.kind === "resub") {
+      icon = "🔁";
+      text = `${event.sender} resub (${event.months} měs.)`;
+    } else if (event.kind === "gift") {
+      icon = "🎁";
+      text = `${event.sender} daroval ${event.count}× sub`;
     }
-
-    const time = e.ts
-      ? new Date(e.ts).toLocaleTimeString("cs-CZ", { hour:"2-digit", minute:"2-digit" })
-      : "--:--";
-
-    out.push({ time, text: eventLine(e) });
-  }
-
-  feed.innerHTML = out.length
-    ? out.map((r) =>
-        `<div class="feedRow">
-          <span class="feedTime">[${r.time}]</span>
-          <span class="feedText">${r.text}</span>
-        </div>`
-      ).join("")
-    : `<div class="muted">Zatím nic… 💜</div>`;
+    
+    return `
+      <div class="activityItem">
+        <span class="activityTime">[${time}]</span>
+        <span class="activityIcon">${icon}</span>
+        <span class="activityText">${text}</span>
+        ${event.amountKc ? `<span class="activityAmount">+${Math.round((SUB_MINUTES[event.tier] || 10) * (event.count || 1))} min</span>` : ''}
+      </div>
+    `;
+  }).join('');
+  
+  feed.innerHTML = feedHTML || `
+    <div class="noData">
+      Zatím žádné akce... čekáme na první sub nebo donate! 🎮
+    </div>
+  `;
 }
 
-// --------------------
-// STREAMELEMENTS REALTIME FUNKCE
-// --------------------
+// ===== STREAMELEMENTS SOCKET =====
 function connectStreamElements() {
-  if (!SE_JWT_TOKEN || SE_JWT_TOKEN === 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJjaXRhZGVsIiwiZXhwIjoxNzg1MTg5NzQ3LCJqdGkiOiJlMjU4YWRjNy04NmViLTQ1NjAtODBmZS1kMTUwOGU2ODk5NTciLCJjaGFubmVsIjoiNWJhN2M4NTY2NzE2NmQ5MTUwYjQwNmZlIiwicm9sZSI6Im93bmVyIiwiYXV0aFRva2VuIjoiYU9PQ0E1UmR3V2M2OTZ0WVJzUU1pQjRjNzZ2ZUdBUFdxN0hsYXJLczhxSHZIb2xJIiwidXNlciI6IjViYTdjODU2NjcxNjZkM2U5OGI0MDZmZCIsInVzZXJfaWQiOiIyOGE3MTNkZS00ZDAzLTQxYzQtOTliMi1hMWQ0NDY0NmY0NDkiLCJ1c2VyX3JvbGUiOiJjcmVhdG9yIiwicHJvdmlkZXIiOiJ0d2l0Y2giLCJwcm92aWRlcl9pZCI6IjI1MzExNjI5MSIsImNoYW5uZWxfaWQiOiI1NGQwNzRjYi1hODQ0LTRmMDctOWZhNC02NWVlNDRmNjJiZGUiLCJjcmVhdG9yX2lkIjoiZDU5MGJmYzMtNDgwYS00MTc0LWEyOWUtZWRlOTI1MjI3N2YyIn0.6m8xyFNGWKwywrT8iDko7C9u2GwLT-tsagsbQlirc_0') {
-    console.log('⚠️ StreamElements: JWT token není nastaven. Realtime feed nebude fungovat.');
+  if (!SE_JWT_TOKEN || SE_JWT_TOKEN === 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJjaXRhZGVsIiwiZXhwIjoxNzg1MTg5ODgyLCJqdGkiOiI2MzMzNDRlMS03ODkxLTQ4NjAtOTIzNC0zNmY3Y2I0YWRhMTciLCJjaGFubmVsIjoiNWJhN2M4NTY2NzE2NmQ5MTUwYjQwNmZlIiwicm9sZSI6Im93bmVyIiwiYXV0aFRva2VuIjoiYU9PQ0E1UmR3V2M2OTZ0WVJzUU1pQjRjNzZ2ZUdBUFdxN0hsYXJLczhxSHZIb2xJIiwidXNlciI6IjViYTdjODU2NjcxNjZkM2U5OGI0MDZmZCIsInVzZXJfaWQiOiIyOGE3MTNkZS00ZDAzLTQxYzQtOTliMi1hMWQ0NDY0NmY0NDkiLCJ1c2VyX3JvbGUiOiJjcmVhdG9yIiwicHJvdmlkZXIiOiJ0d2l0Y2giLCJwcm92aWRlcl9pZCI6IjI1MzExNjI5MSIsImNoYW5uZWxfaWQiOiI1NGQwNzRjYi1hODQ0LTRmMDctOWZhNC02NWVlNDRmNjJiZGUiLCJjcmVhdG9yX2lkIjoiZDU5MGJmYzMtNDgwYS00MTc0LWEyOWUtZWRlOTI1MjI3N2YyIn0.fXn27iJsOAB7u02mFzBLEEvAY1bYBM47LhMWbhJv_yg') {
+    console.log('⚠️ StreamElements: JWT token není nastaven');
     return;
   }
-
+  
   if (!window.io) {
-    console.error('❌ Socket.io knihovna není načtena!');
+    console.error('❌ Socket.io není načteno');
     return;
   }
-
-  console.log('🔄 StreamElements: Připojuji se...');
-  seSocket = io('https://realtime.streamelements.com', {
+  
+  const socket = io('https://realtime.streamelements.com', {
     transports: ['websocket']
   });
-
-  seSocket.on('connect', () => {
-    console.log('✅ StreamElements: Připojeno!');
-    seSocket.emit('authenticate', {
+  
+  socket.on('connect', () => {
+    console.log('✅ StreamElements: Připojeno');
+    socket.emit('authenticate', {
       method: 'jwt',
       token: SE_JWT_TOKEN
     });
   });
-
-  seSocket.on('event', (data) => {
+  
+  socket.on('event', (data) => {
     console.log('🎬 StreamElements event:', data.listener);
-    handleStreamEvent(data);
+    // Zde můžeš přidat okamžitou aktualizaci feedu
   });
-
-  seSocket.on('error', (err) => {
+  
+  socket.on('error', (err) => {
     console.error('❌ StreamElements error:', err);
   });
-
-  seSocket.on('disconnect', () => {
-    console.log('⚠️ StreamElements: Odpojeno.');
-  });
 }
 
-function handleStreamEvent(data) {
-  const listener = data.listener;
-  const event = data.event;
+// ===== MAIN RENDER =====
+function renderDashboard(data) {
+  if (!data) return;
   
-  let newEvent = {
-    ts: Date.now(),
-    kind: 'system',
-    text: ''
-  };
-
-  switch (listener) {
-    case 'subscriber':
-      const tierMap = { 1000: 1, 2000: 2, 3000: 3 };
-      const tier = tierMap[event.tier] || 1;
-      newEvent.kind = event.resub ? 'resub' : 'sub';
-      newEvent.sender = event.displayName || event.username;
-      newEvent.tier = tier;
-      newEvent.months = event.cumulativeMonths;
-      newEvent.text = `${event.resub ? '🔁 Resub' : '⭐ Nový sub'} (T${tier}) od ${newEvent.sender} 💗`;
-      break;
-
-    case 'tip':
-      newEvent.kind = 'donation';
-      newEvent.sender = event.displayName || event.username;
-      newEvent.amountKc = event.amount;
-      newEvent.text = `💰 Donate ${event.amount} Kč od ${newEvent.sender} 💜`;
-      break;
-
-    case 'subscriber-gift':
-      newEvent.kind = 'gift';
-      newEvent.sender = event.displayName || event.username;
-      newEvent.count = event.gifted || event.amount || 1;
-      newEvent.tier = 1;
-      newEvent.text = `🎁 ${newEvent.sender} daroval ${newEvent.count}× sub 💗`;
-      break;
-
-    case 'cheer':
-      newEvent.kind = 'cheer';
-      newEvent.sender = event.displayName || event.username;
-      newEvent.amountKc = event.amount;
-      newEvent.text = `👏 ${event.amount} bits od ${newEvent.sender} ✨`;
-      break;
-
-    case 'follower':
-      newEvent.text = `🆕 ${event.displayName || event.username} začal/a sledovat!`;
-      break;
-
-    default:
-      console.log('Další StreamElements událost:', listener);
-      return;
+  // Čas
+  const remaining = Number(data.timeRemainingSec) || 0;
+  $("#timeLeft").textContent = formatHMS(remaining);
+  
+  if (data.endsAt) {
+    $("#endsAtText").textContent = `Konec: ${formatDateTime(data.endsAt)}`;
   }
-
-  // Přidáme událost do realtimeEvents (max 50)
-  realtimeEvents.unshift(newEvent);
-  if (realtimeEvents.length > 50) realtimeEvents.length = 50;
-
-  // Okamžitě aktualizujeme feed kombinací API dat a realtime událostí
-  updateCombinedFeed();
-}
-
-function updateCombinedFeed() {
-  // Zkombinujeme poslední události z API a realtime události
-  // Pro zobrazení použijeme hlavně realtimeEvents, ale zachováme strukturu
-  renderFeed(realtimeEvents.slice(0, 10));
-}
-
-// --------------------
-// Main render
-// --------------------
-function render(state) {
-  const startedAt = Number(state?.startedAt) || null;
-  const endsAt = Number(state?.endsAt) || null;
-
-  const paused = !!state?.paused;
-  const pausedAt = state?.pausedAt ? Number(state.pausedAt) : null;
-
-  // do konce (server počítá)
-  const remaining = Number(state?.timeRemainingSec) || 0;
-  setText("#timeLeft", formatHMS(remaining));
-  setText("#endsAtText", endsAt ? `Konec: ${formatDateTime(endsAt)}` : "Konec: —");
-
-  // jak dlouho streamuje
-  if (startedAt) {
-    const now = Date.now();
-    const effectiveNow = paused && pausedAt ? pausedAt : now;
-    const streamedSec = Math.max(0, Math.floor((effectiveNow - startedAt) / 1000));
-    setText("#timeRunning", formatHMS(streamedSec));
-    setText("#startedAtText", `Start: ${formatDateTime(startedAt)}`);
-  } else {
-    setText("#timeRunning", "--:--:--");
-    setText("#startedAtText", "Start: —");
+  
+  if (data.startedAt) {
+    const streamedSec = Math.floor((Date.now() - data.startedAt) / 1000);
+    $("#timeRunning").textContent = formatHMS(streamedSec);
+    $("#startedAtText").textContent = `Start: ${formatDateTime(data.startedAt)}`;
+    
+    if (data.endsAt && data.endsAt > data.startedAt) {
+      const percent = Math.min(100, ((Date.now() - data.startedAt) / (data.endsAt - data.startedAt)) * 100);
+      $("#timeProgress").style.width = `${percent}%`;
+      $("#timePct").textContent = `${Math.round(percent)}%`;
+    }
   }
-
-  // progress času
-  if (startedAt && endsAt && endsAt > startedAt) {
-    const now = Date.now();
-    const effectiveNow = paused && pausedAt ? pausedAt : now;
-    const total = endsAt - startedAt;
-    const elapsed = clamp01((effectiveNow - startedAt) / total);
-    const pct = Math.round(elapsed * 100);
-    setWidth("#timeProgress", pct);
-    setText("#timePct", `${pct}%`);
-  }
-
-  // money
-  const money = Number(state?.money) || 0;
-  setText("#money", `${formatKc(money)} Kč`);
-  setText("#moneySmall", `${formatKc(money)} / ${formatKc(GOAL_TOTAL)} Kč`);
-  setWidth("#moneyProgress", Math.round(clamp01(money / GOAL_TOTAL) * 100));
-
-  // subs
-  const t1 = Number(state?.t1) || 0;
-  const t2 = Number(state?.t2) || 0;
-  const t3 = Number(state?.t3) || 0;
-  const subsTotal = Number(state?.subsTotal) || (t1 + t2 + t3);
-
-  setText("#subsTotal", String(subsTotal));
-  setText("#subsBreak", `${t1} / ${t2} / ${t3}`);
-
+  
+  // Peníze
+  const money = Number(data.money) || 0;
+  $("#money").textContent = `${formatKc(money)} Kč`;
+  $("#moneySmall").textContent = `${formatKc(money)} / ${formatKc(GOAL_TOTAL)} Kč`;
+  
+  const moneyPercent = Math.min(100, (money / GOAL_TOTAL) * 100);
+  $("#moneyProgress").style.width = `${moneyPercent}%`;
+  
+  // Suby
+  const t1 = Number(data.t1) || 0;
+  const t2 = Number(data.t2) || 0;
+  const t3 = Number(data.t3) || 0;
+  const subsTotal = Number(data.subsTotal) || (t1 + t2 + t3);
+  
+  $("#subsTotal").textContent = subsTotal;
+  $("#subsBreak").textContent = `${t1} / ${t2} / ${t3}`;
+  
+  // Zbytek
   renderGoals(money);
-  renderTop(state?.topDonors || []);
-
-  // Přidáme události z API do realtimeEvents pro úplnost
-  const apiEvents = state?.lastEvents || state?.events || [];
-  if (apiEvents.length > 0 && realtimeEvents.length === 0) {
-    realtimeEvents = apiEvents.map(normalizeEvent);
-  }
-  updateCombinedFeed();
+  renderTopDonors(data.topDonors);
+  renderActivityFeed(data.lastEvents || data.events);
 }
 
-// --------------------
-// Fetch loop
-// --------------------
-async function loadState() {
+// ===== API FETCH =====
+async function fetchDashboardData() {
   try {
-    const r = await fetch(API_STATE, { cache: "no-store" });
-    if (!r.ok) throw new Error(`API error ${r.status}`);
-    const data = await r.json();
-    render(data);
-  } catch (err) {
-    console.error('Chyba při načítání stavu:', err);
+    const response = await fetch(API_STATE, { cache: "no-store" });
+    if (!response.ok) throw new Error(`API error: ${response.status}`);
+    const data = await response.json();
+    renderDashboard(data);
+  } catch (error) {
+    console.error('Chyba při načítání dat:', error);
   }
 }
 
-// --------------------
-// Start aplikace
-// --------------------
-function start() {
+// ===== INITIALIZATION =====
+function initDashboard() {
   initTheme();
-  loadState().catch(console.error);
-  setInterval(() => loadState().catch(console.error), 3000);
-  
-  // Spojení se StreamElements
+  fetchDashboardData();
   connectStreamElements();
+  
+  // Auto-refresh každé 3 sekundy
+  setInterval(fetchDashboardData, 3000);
+  
+  // Přidání CSS pro goal items a activity items
+  const style = document.createElement('style');
+  style.textContent = `
+    .goalItem {
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      padding: 16px;
+      margin-bottom: 12px;
+      transition: var(--transition);
+    }
+    
+    .goalItem:hover {
+      transform: translateX(4px);
+      border-color: var(--violet);
+    }
+    
+    .goalItem.done {
+      background: rgba(110, 231, 255, 0.1);
+      border-color: rgba(110, 231, 255, 0.3);
+    }
+    
+    .goalHeader {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 12px;
+    }
+    
+    .goalIcon {
+      font-size: 20px;
+    }
+    
+    .goalTitle {
+      flex: 1;
+      margin: 0 12px;
+      font-weight: 700;
+      font-size: 15px;
+    }
+    
+    .goalAmount {
+      font-weight: 800;
+      color: var(--violet);
+    }
+    
+    .goalProgress {
+      height: 6px;
+      background: rgba(255, 255, 255, 0.1);
+      border-radius: 3px;
+      overflow: hidden;
+      margin-bottom: 8px;
+    }
+    
+    .goalProgressBar {
+      height: 100%;
+      background: linear-gradient(90deg, var(--pink), var(--violet));
+      border-radius: 3px;
+      transition: width 0.8s ease;
+    }
+    
+    .goalStatus {
+      font-size: 13px;
+      color: var(--muted);
+      font-weight: 600;
+    }
+    
+    .activityItem {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 14px 16px;
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      transition: var(--transition);
+    }
+    
+    .activityItem:hover {
+      transform: translateX(4px);
+      background: rgba(255, 255, 255, 0.08);
+    }
+    
+    .activityTime {
+      color: var(--muted);
+      font-weight: 700;
+      font-size: 13px;
+      min-width: 60px;
+    }
+    
+    .activityIcon {
+      font-size: 18px;
+    }
+    
+    .activityText {
+      flex: 1;
+      font-weight: 600;
+      font-size: 14px;
+    }
+    
+    .activityAmount {
+      font-weight: 800;
+      color: var(--violet);
+      font-size: 13px;
+    }
+    
+    .noData {
+      text-align: center;
+      padding: 40px;
+      color: var(--muted);
+      font-size: 15px;
+      font-weight: 600;
+    }
+    
+    .donorsTable td:first-child {
+      font-weight: 900;
+      color: var(--violet);
+    }
+    
+    .donorsTable td:nth-child(3) {
+      font-weight: 800;
+      color: var(--violet);
+    }
+    
+    .donorsTable td:last-child {
+      color: var(--cyan);
+      font-weight: 700;
+    }
+  `;
+  document.head.appendChild(style);
 }
 
-document.addEventListener("DOMContentLoaded", start);
-
-// --------------------
-// Twitch Embed pomocné funkce
-// --------------------
-function checkTwitchStatus() {
-    const streamIframe = document.querySelector('.twitch-stream iframe');
-    const chatIframe = document.querySelector('.twitch-chat iframe');
-    const streamContainer = document.querySelector('.twitch-stream');
-    
-    if (!streamIframe || !chatIframe) return;
-    
-    // Pravidelně kontrolujeme, zda iframy fungují
-    const streamSrc = streamIframe.src;
-    const chatSrc = chatIframe.src;
-    
-    // Pokud se iframy nenačetly správně, zkusíme je znovu načíst
-    setTimeout(() => {
-        try {
-            const streamDoc = streamIframe.contentDocument || streamIframe.contentWindow.document;
-            if (streamDoc && streamDoc.body && streamDoc.body.innerHTML.includes('offline')) {
-                streamContainer.classList.add('offline');
-            } else {
-                streamContainer.classList.remove('offline');
-            }
-        } catch (e) {
-            // Cross-origin error - ignorujeme
-        }
-    }, 3000);
-}
-
-// Přidáme kontrolu po načtení stránky
-window.addEventListener('load', () => {
-    setTimeout(checkTwitchStatus, 2000);
-    setInterval(checkTwitchStatus, 15000);
-});
+// ===== START =====
+document.addEventListener("DOMContentLoaded", initDashboard);
