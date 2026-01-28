@@ -43,6 +43,14 @@ const GOALS = [
   { amount: 200000, icon:"🏙️", title:"Víkend v Praze" },
 ];
 
+// ============================
+// STREAMELEMENTS KONFIGURACE
+// ============================
+// ZDE VLOŽ SVŮJ JWT TOKEN Z: StreamElements > Settings > API tokens
+const SE_JWT_TOKEN = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJjaXRhZGVsIiwiZXhwIjoxNzg1MTg5NzQ3LCJqdGkiOiJlMjU4YWRjNy04NmViLTQ1NjAtODBmZS1kMTUwOGU2ODk5NTciLCJjaGFubmVsIjoiNWJhN2M4NTY2NzE2NmQ5MTUwYjQwNmZlIiwicm9sZSI6Im93bmVyIiwiYXV0aFRva2VuIjoiYU9PQ0E1UmR3V2M2OTZ0WVJzUU1pQjRjNzZ2ZUdBUFdxN0hsYXJLczhxSHZIb2xJIiwidXNlciI6IjViYTdjODU2NjcxNjZkM2U5OGI0MDZmZCIsInVzZXJfaWQiOiIyOGE3MTNkZS00ZDAzLTQxYzQtOTliMi1hMWQ0NDY0NmY0NDkiLCJ1c2VyX3JvbGUiOiJjcmVhdG9yIiwicHJvdmlkZXIiOiJ0d2l0Y2giLCJwcm92aWRlcl9pZCI6IjI1MzExNjI5MSIsImNoYW5uZWxfaWQiOiI1NGQwNzRjYi1hODQ0LTRmMDctOWZhNC02NWVlNDRmNjJiZGUiLCJjcmVhdG9yX2lkIjoiZDU5MGJmYzMtNDgwYS00MTc0LWEyOWUtZWRlOTI1MjI3N2YyIn0.6m8xyFNGWKwywrT8iDko7C9u2GwLT-tsagsbQlirc_0';
+let seSocket = null;
+let realtimeEvents = []; // Udržuje si vlastní seznam událostí pro feed
+
 const $ = (sel) => document.querySelector(sel);
 
 function formatKc(n) {
@@ -153,12 +161,12 @@ function renderTop(donors) {
 }
 
 // --------------------
-// Feed (agregace giftů)
+// Feed (agregace giftů) - UPRAVENO PRO REALTIME
 // --------------------
 function normalizeEvent(e) {
   // podporuje i legacy {text}
   return {
-    ts: e?.ts ?? null,
+    ts: e?.ts ?? Date.now(),
     kind: e?.kind ?? null,
     tier: e?.tier ?? null,
     months: e?.months ?? null,
@@ -266,6 +274,113 @@ function renderFeed(eventsRaw) {
 }
 
 // --------------------
+// STREAMELEMENTS REALTIME FUNKCE
+// --------------------
+function connectStreamElements() {
+  if (!SE_JWT_TOKEN || SE_JWT_TOKEN === 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJjaXRhZGVsIiwiZXhwIjoxNzg1MTg5NzQ3LCJqdGkiOiJlMjU4YWRjNy04NmViLTQ1NjAtODBmZS1kMTUwOGU2ODk5NTciLCJjaGFubmVsIjoiNWJhN2M4NTY2NzE2NmQ5MTUwYjQwNmZlIiwicm9sZSI6Im93bmVyIiwiYXV0aFRva2VuIjoiYU9PQ0E1UmR3V2M2OTZ0WVJzUU1pQjRjNzZ2ZUdBUFdxN0hsYXJLczhxSHZIb2xJIiwidXNlciI6IjViYTdjODU2NjcxNjZkM2U5OGI0MDZmZCIsInVzZXJfaWQiOiIyOGE3MTNkZS00ZDAzLTQxYzQtOTliMi1hMWQ0NDY0NmY0NDkiLCJ1c2VyX3JvbGUiOiJjcmVhdG9yIiwicHJvdmlkZXIiOiJ0d2l0Y2giLCJwcm92aWRlcl9pZCI6IjI1MzExNjI5MSIsImNoYW5uZWxfaWQiOiI1NGQwNzRjYi1hODQ0LTRmMDctOWZhNC02NWVlNDRmNjJiZGUiLCJjcmVhdG9yX2lkIjoiZDU5MGJmYzMtNDgwYS00MTc0LWEyOWUtZWRlOTI1MjI3N2YyIn0.6m8xyFNGWKwywrT8iDko7C9u2GwLT-tsagsbQlirc_0') {
+    console.log('⚠️ StreamElements: JWT token není nastaven. Realtime feed nebude fungovat.');
+    return;
+  }
+
+  if (!window.io) {
+    console.error('❌ Socket.io knihovna není načtena!');
+    return;
+  }
+
+  console.log('🔄 StreamElements: Připojuji se...');
+  seSocket = io('https://realtime.streamelements.com', {
+    transports: ['websocket']
+  });
+
+  seSocket.on('connect', () => {
+    console.log('✅ StreamElements: Připojeno!');
+    seSocket.emit('authenticate', {
+      method: 'jwt',
+      token: SE_JWT_TOKEN
+    });
+  });
+
+  seSocket.on('event', (data) => {
+    console.log('🎬 StreamElements event:', data.listener);
+    handleStreamEvent(data);
+  });
+
+  seSocket.on('error', (err) => {
+    console.error('❌ StreamElements error:', err);
+  });
+
+  seSocket.on('disconnect', () => {
+    console.log('⚠️ StreamElements: Odpojeno.');
+  });
+}
+
+function handleStreamEvent(data) {
+  const listener = data.listener;
+  const event = data.event;
+  
+  let newEvent = {
+    ts: Date.now(),
+    kind: 'system',
+    text: ''
+  };
+
+  switch (listener) {
+    case 'subscriber':
+      const tierMap = { 1000: 1, 2000: 2, 3000: 3 };
+      const tier = tierMap[event.tier] || 1;
+      newEvent.kind = event.resub ? 'resub' : 'sub';
+      newEvent.sender = event.displayName || event.username;
+      newEvent.tier = tier;
+      newEvent.months = event.cumulativeMonths;
+      newEvent.text = `${event.resub ? '🔁 Resub' : '⭐ Nový sub'} (T${tier}) od ${newEvent.sender} 💗`;
+      break;
+
+    case 'tip':
+      newEvent.kind = 'donation';
+      newEvent.sender = event.displayName || event.username;
+      newEvent.amountKc = event.amount;
+      newEvent.text = `💰 Donate ${event.amount} Kč od ${newEvent.sender} 💜`;
+      break;
+
+    case 'subscriber-gift':
+      newEvent.kind = 'gift';
+      newEvent.sender = event.displayName || event.username;
+      newEvent.count = event.gifted || event.amount || 1;
+      newEvent.tier = 1;
+      newEvent.text = `🎁 ${newEvent.sender} daroval ${newEvent.count}× sub 💗`;
+      break;
+
+    case 'cheer':
+      newEvent.kind = 'cheer';
+      newEvent.sender = event.displayName || event.username;
+      newEvent.amountKc = event.amount;
+      newEvent.text = `👏 ${event.amount} bits od ${newEvent.sender} ✨`;
+      break;
+
+    case 'follower':
+      newEvent.text = `🆕 ${event.displayName || event.username} začal/a sledovat!`;
+      break;
+
+    default:
+      console.log('Další StreamElements událost:', listener);
+      return;
+  }
+
+  // Přidáme událost do realtimeEvents (max 50)
+  realtimeEvents.unshift(newEvent);
+  if (realtimeEvents.length > 50) realtimeEvents.length = 50;
+
+  // Okamžitě aktualizujeme feed kombinací API dat a realtime událostí
+  updateCombinedFeed();
+}
+
+function updateCombinedFeed() {
+  // Zkombinujeme poslední události z API a realtime události
+  // Pro zobrazení použijeme hlavně realtimeEvents, ale zachováme strukturu
+  renderFeed(realtimeEvents.slice(0, 10));
+}
+
+// --------------------
 // Main render
 // --------------------
 function render(state) {
@@ -320,23 +435,39 @@ function render(state) {
 
   renderGoals(money);
   renderTop(state?.topDonors || []);
-  renderFeed(state?.lastEvents || state?.events || []);
+
+  // Přidáme události z API do realtimeEvents pro úplnost
+  const apiEvents = state?.lastEvents || state?.events || [];
+  if (apiEvents.length > 0 && realtimeEvents.length === 0) {
+    realtimeEvents = apiEvents.map(normalizeEvent);
+  }
+  updateCombinedFeed();
 }
 
 // --------------------
 // Fetch loop
 // --------------------
 async function loadState() {
-  const r = await fetch(API_STATE, { cache: "no-store" });
-  if (!r.ok) throw new Error(`API error ${r.status}`);
-  const data = await r.json();
-  render(data);
+  try {
+    const r = await fetch(API_STATE, { cache: "no-store" });
+    if (!r.ok) throw new Error(`API error ${r.status}`);
+    const data = await r.json();
+    render(data);
+  } catch (err) {
+    console.error('Chyba při načítání stavu:', err);
+  }
 }
 
+// --------------------
+// Start aplikace
+// --------------------
 function start() {
   initTheme();
   loadState().catch(console.error);
   setInterval(() => loadState().catch(console.error), 3000);
+  
+  // Spojení se StreamElements
+  connectStreamElements();
 }
 
 document.addEventListener("DOMContentLoaded", start);
