@@ -57,129 +57,100 @@
       </div>
     </section>
 
-    <!-- MAIN CONTENT GRID -->
-    <div class="mainGrid">
-      <!-- LEFT COLUMN -->
-      <div class="leftCol">
-        <!-- STATS CARD -->
-        <section class="card">
-          <div class="cardHead">
-            <h2>💰 Vybráno</h2>
-            <div class="muted">donates</div>
-          </div>
-          <div class="money" id="money">600 Kč</div>
-          <div class="muted" id="moneySmall">600 / 200 000 Kč</div>
-          <div class="bar">
-            <div class="barFill" id="moneyProgress" style="width: 0.3%"></div>
-          </div>
-          <div class="statsRow">
-            <div class="statBox">
-              <div class="statLabel">Suby celkem</div>
-              <div class="statValue" id="subsTotal">11</div>
-            </div>
-            <div class="statBox">
-              <div class="statLabel">T1 / T2 / T3</div>
-              <div class="statValue" id="subsBreak">9 / 1 / 1</div>
-            </div>
-          </div>
-        </section>
-
-        <!-- RULES CARD -->
-        <section class="card">
-          <div class="cardHead">
-            <h2>📜 Pravidla přidávání času</h2>
-            <div class="muted">automaticky</div>
-          </div>
-          <ul class="rules">
-            <li><span class="ruleIcon">💗</span> T1 sub = <strong>+10 min</strong></li>
-            <li><span class="ruleIcon">💗</span> T2 sub = <strong>+20 min</strong></li>
-            <li><span class="ruleIcon">💗</span> T3 sub = <strong>+30 min</strong></li>
-            <li><span class="ruleIcon">💗</span> 100 Kč donate = <strong>+15 min</strong> (poměrově)</li>
-          </ul>
-          <div class="muted tiny">Pozn.: donate přičítá i za 67 Kč atd. (poměrně).</div>
-        </section>
-
-        <!-- SOCIALS CARD -->
-        <section class="card">
-          <div class="cardHead">
-            <h2>🔗 Moje socials</h2>
-            <div class="muted">klikni a pošli lásku ✨</div>
-          </div>
-          <div class="socialsGrid">
-            <a class="socialBtn instagram" href="https://instagram.com/fufinka.a" target="_blank">
-              <span class="socialIcon">📸</span>
-              <span class="socialText">Instagram</span>
-            </a>
-            <a class="socialBtn twitch" href="https://twitch.tv/fufinkaa" target="_blank">
-              <span class="socialIcon">🟣</span>
-              <span class="socialText">Twitch</span>
-            </a>
-            <a class="socialBtn youtube" href="https://youtube.com/FufinKa" target="_blank">
-              <span class="socialIcon">▶️</span>
-              <span class="socialText">YouTube</span>
-            </a>
-          </div>
-        </section>
+       <!-- MAIN CONTENT GRID -->
+    <section class="leftCol card">
+      <div class="cardHead">
+        <h2>💰 Vybráno</h2>
+        <div class="muted">donates</div>
+      </div>
+      <div class="money" id="money">600 Kč</div>
+      <div class="muted" id="moneySmall">600 / 200 000 Kč</div>
+      <div class="bar">
+        <div class="barFill" id="moneyProgress" style="width: 0.3%"></div>
+      </div>
+      <div class="miniRow">
+        <div class="mini">
+          <div class="miniLabel">Suby celkem</div>
+          <div class="miniVal" id="subsTotal">11</div>
+        </div>
+        <div class="mini">
+          <div class="miniLabel">T1 / T2 / T3</div>
+          <div class="miniVal" id="subsBreak">9 / 1 / 1</div>
+        </div>
       </div>
 
-      <!-- CENTER COLUMN - TWITCH STREAM -->
-      <div class="centerCol">
-        <section class="card streamCard">
-          <div class="cardHead">
-            <h2>🔴 Živě na Twitchi</h2>
-            <div class="muted">Sleduj a přidej se do chatu! 🎮</div>
-          </div>
-          <div class="streamContainer">
-            <div class="streamWrapper">
-              <iframe
-                src="https://player.twitch.tv/?channel=fufinkaa&parent=fufinkaa.github.io"
-                frameborder="0"
-                allowfullscreen="true"
-                scrolling="no"
-                allow="autoplay; fullscreen"
-                title="Živý stream Fufinka">
-              </iframe>
-            </div>
-            <div class="chatWrapper">
-              <iframe
-                src="https://www.twitch.tv/embed/fufinkaa/chat?parent=fufinkaa.github.io&darkpopout"
-                frameborder="0"
-                scrolling="yes"
-                allow="autoplay"
-                title="Chat Fufinka">
-              </iframe>
-            </div>
-          </div>
-          <div class="streamInfo">
-            <div class="streamStat">
-              <span class="statIcon">🎁</span>
-              <span class="statText">29 gifts do badge upgrade!</span>
-            </div>
-            <div class="streamStat">
-              <span class="statIcon">🎯</span>
-              <span class="statText">71/100 Gifts</span>
-            </div>
-          </div>
-        </section>
-      </div>
+      <div class="spacer"></div>
 
-      <!-- RIGHT COLUMN - GOALS -->
-      <div class="rightCol">
-        <section class="card goalsCard">
-          <div class="cardHead">
-            <h2>🎯 Goaly</h2>
-            <div class="muted"><span id="goalHeader">600 / 200 000 Kč</span></div>
-          </div>
-          <div class="bar">
-            <div class="barFill" id="goalBar" style="width: 0.3%"></div>
-          </div>
-          <div class="goalsList" id="goalList">
-            <!-- Goals will be populated by JavaScript -->
-          </div>
-          <div class="muted tiny">✅ Milníky se automaticky odškrtávají podle vybraných Kč.</div>
-        </section>
+      <div class="cardHead">
+        <h2>📜 Pravidla přidávání času</h2>
+        <div class="muted">automaticky</div>
       </div>
-    </div>
+      <ul class="rules">
+        <li>💗 T1 sub = <b>+10 min</b></li>
+        <li>💗 T2 sub = <b>+20 min</b></li>
+        <li>💗 T3 sub = <b>+30 min</b></li>
+        <li>💗 100 Kč donate = <b>+15 min</b> (poměrově)</li>
+      </ul>
+      <div class="muted tiny">Pozn.: donate přičítá i za 67 Kč atd. (poměrně).</div>
+
+      <div class="spacer"></div>
+
+      <div class="cardHead">
+        <h2>🔗 Moje socials</h2>
+        <div class="muted">klikni a pošli lásku ✨</div>
+      </div>
+      <div class="socialsCol">
+        <a class="social ig" href="https://instagram.com/fufinka.a" target="_blank" rel="noreferrer">📸 Instagram</a>
+        <a class="social tw" href="https://twitch.tv/fufinkaa" target="_blank" rel="noreferrer">🟣 Twitch</a>
+        <a class="social yt" href="https://youtube.com/FufinKa" target="_blank" rel="noreferrer">▶️ YouTube</a>
+      </div>
+    </section>
+
+    <!-- STŘED -->
+    <section class="card goals midCol">
+      <div class="cardHead">
+        <h2>🎯 Goaly</h2>
+        <div class="muted"><span id="goalHeader">600 / 200 000 Kč</span></div>
+      </div>
+      <div class="bar">
+        <div class="barFill" id="goalBar" style="width: 0.3%"></div>
+      </div>
+      <div class="goalList" id="goalList"></div>
+      <div class="muted tiny">✅ Milníky se automaticky odškrtávají podle vybraných Kč.</div>
+    </section>
+
+    <!-- PRAVÝ -->
+    <section class="card rightCol">
+      <div class="cardHead">
+        <h2>🔴 Živě na Twitchi</h2>
+        <div class="muted">Sleduj a přidej se do chatu! 🎮</div>
+      </div>
+      <div class="live-container">
+        <div class="twitch-stream">
+          <iframe
+            src="https://player.twitch.tv/?channel=fufinkaa&parent=fufinkaa.github.io"
+            frameborder="0"
+            allowfullscreen="true"
+            scrolling="no"
+            allow="autoplay; fullscreen"
+            title="Živý stream Fufinka">
+          </iframe>
+        </div>
+        <div class="twitch-chat">
+          <iframe
+            src="https://www.twitch.tv/embed/fufinkaa/chat?parent=fufinkaa.github.io&darkpopout"
+            frameborder="0"
+            scrolling="yes"
+            allow="autoplay"
+            title="Chat Fufinka">
+          </iframe>
+        </div>
+      </div>
+      <div class="streamInfo" style="margin-top: 15px; padding: 10px; background: rgba(255,255,255,0.05); border-radius: 12px; display: flex; gap: 20px;">
+        <div><span style="font-size: 18px">🎁</span> 29 gifts do badge upgrade!</div>
+        <div><span style="font-size: 18px">🎯</span> 71/100 Gifts</div>
+      </div>
+    </section>
 
     <!-- WIDE CARDS -->
     <!-- TOP 5 DONORS -->
