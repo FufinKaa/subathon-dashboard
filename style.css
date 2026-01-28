@@ -517,3 +517,51 @@ h2{
     text-align: left;
   }
 }
+
+/* ===== STREAM INFO ===== */
+.streamInfo {
+  margin-top: 15px;
+  padding: 12px;
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 12px;
+  display: flex;
+  gap: 20px;
+  align-items: center;
+}
+
+.streamInfo div {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-weight: 600;
+  font-size: 14px;
+}
+
+/* ===== RESPONSIVE PRO TWITCH V PRAVÉM SLOUPCI ===== */
+@media (max-width: 1200px) {
+  .rightCol .live-container {
+    grid-template-columns: 2fr 1fr;
+  }
+  
+  .rightCol .twitch-stream,
+  .rightCol .twitch-chat {
+    height: 300px;
+  }
+}
+
+@media (max-width: 768px) {
+  .rightCol .live-container {
+    grid-template-columns: 1fr;
+  }
+  
+  .rightCol .twitch-stream,
+  .rightCol .twitch-chat {
+    height: 250px;
+  }
+  
+  .streamInfo {
+    flex-direction: column;
+    gap: 10px;
+    align-items: flex-start;
+  }
+}
