@@ -481,6 +481,31 @@ function initDashboard() {
   
   // Připoj StreamElements
   connectStreamElements();
+
+  function initDashboard() {
+  initTheme();
+  
+  // Přidej CSS pro notifikace
+  addNotificationStyles();
+  
+  // Inicializuj timery
+  updateTimers();
+  
+  // Načti data z API (pokud existuje)
+  fetchDashboardData();
+  
+  // Připoj StreamElements
+  connectStreamElements();
+  
+  // ✅ PŘIDEJ TENTO ŘÁDEK:
+  addManualTestButtons(); // Testovací panel vpravo dole
+  
+  // Auto-refresh
+  setInterval(fetchDashboardData, 5000); // Každých 5s
+  
+  // Aktualizuj timery každou sekundu
+  setInterval(updateTimers, 1000);
+}
   
   // Auto-refresh každé 2 sekundy
   setInterval(fetchDashboardData, 2000);
