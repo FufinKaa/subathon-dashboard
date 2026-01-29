@@ -238,7 +238,7 @@ function renderDashboard(data) {
     $("#endsAtText").textContent = `Konec: ${formatDateTime(data.endsAt)}`;
   }
   
-  // Progress času
+  // Progress času POUZE
   if (data.startedAt && data.endsAt && data.endsAt > data.startedAt) {
     const total = data.endsAt - data.startedAt;
     const elapsed = Date.now() - data.startedAt;
@@ -266,6 +266,60 @@ function renderDashboard(data) {
   renderSubGoals(subsTotal);
   renderActivityFeed(data.lastEvents || data.events || []);
 }
+
+// ===== DONATEGOAL RENDER =====
+function renderGoals(money) {
+  const m = Number(money) || 0;
+  const list = $("#goalList");
+  if (!list) return;
+  
+  const goalsHTML = GOALS.map(g => {
+    return `
+      <div class="goal-row">
+        <div class="goal-name">
+          <span>${g.icon}</span>
+          <span>${g.title}</span>
+        </div>
+        <div class="goal-amount">${formatKc(g.amount)} Kč</div>
+      </div>
+    `;
+  }).join('');
+  
+  list.innerHTML = goalsHTML;
+  $("#goalHeader").textContent = `${formatKc(m)} / ${formatKc(GOAL_TOTAL)} Kč`;
+  
+  // ODSTRANĚNO: progress pro donate
+  // const goalPercent = Math.min(100, (m / GOAL_TOTAL) * 100);
+  // $("#moneyProgress").style.width = `${goalPercent}%`;
+  // $("#moneyPct").textContent = `${goalPercent.toFixed(1)}%`;
+}
+
+// ===== SUBGOAL RENDER =====
+function renderSubGoals(subsTotal) {
+  const subs = Number(subsTotal) || 0;
+  const list = $("#subGoalList");
+  if (!list) return;
+  
+  const subGoalsHTML = SUB_GOALS.map(g => {
+    return `
+      <div class="goal-row">
+        <div class="goal-name">
+          <span>${g.icon}</span>
+          <span>${g.title}</span>
+        </div>
+        <div class="goal-amount">${g.amount} subs</div>
+      </div>
+    `;
+  }).join('');
+  
+  list.innerHTML = subGoalsHTML;
+  $("#subGoalHeader").textContent = `${subs} / ${SUB_GOAL_TOTAL} subs`;
+  
+  // ODSTRANĚNO: progress pro suby
+  // const subGoalPercent = Math.min(100, (subs / SUB_GOAL_TOTAL) * 100);
+  // $("#subGoalBar").style.width = `${subGoalPercent}%`;
+  // $("#subPct").textContent = `${subGoalPercent.toFixed(1)}%`;
+
 
 // ===== API FETCH =====
 async function fetchDashboardData() {
