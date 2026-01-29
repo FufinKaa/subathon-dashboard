@@ -64,7 +64,7 @@
       </div>
     </div>
 
-          <!-- PROGRESS BAR - POUZE ČAS -->
+    <!-- PROGRESS BAR - POUZE ČAS -->
     <div class="progress-single">
       <div class="progress-card">
         <div class="progress-bar">
@@ -131,15 +131,14 @@
       <div class="note-text">Pozn.: donate přičítá i za 67 Kč atd. (poměrně).</div>
     </section>
 
-    <!-- TWITCH A POSLEDNÍ AKCE -->
-    <div class="content-grid">
-      <!-- TWITCH STREAM -->
-      <section class="card">
-        <div class="card-header">
-          <h2 class="card-title">🔴 Živě na Twitchi</h2>
-          <div class="card-subtitle">Sleduj a přidej se do chatu! 🎮</div>
-        </div>
-        <div class="twitch-embed">
+    <!-- TWITCH STREAM A CHAT - SAMOSTATNÝ ŘÁDEK (2 SLOUPCE) -->
+    <section class="card twitch-card">
+      <div class="card-header">
+        <h2 class="card-title">🔴 Twitch stream a chat</h2>
+        <div class="card-subtitle">Sleduj a přidej se do chatu! 🎮</div>
+      </div>
+      <div class="twitch-container">
+        <div class="twitch-stream">
           <iframe
             src="https://player.twitch.tv/?channel=fufinkaa&parent=localhost"
             frameborder="0"
@@ -148,6 +147,41 @@
             allow="autoplay; fullscreen"
             title="Živý stream Fufinka">
           </iframe>
+        </div>
+        <div class="twitch-chat">
+          <iframe
+            src="https://www.twitch.tv/embed/fufinkaa/chat?parent=localhost&darkpopout"
+            frameborder="0"
+            scrolling="yes"
+            allow="autoplay"
+            title="Chat Fufinka">
+          </iframe>
+        </div>
+      </div>
+    </section>
+
+    <!-- TOP 5 DONÁTORŮ A POSLEDNÍ AKCE - 2 SLOUPCE -->
+    <div class="bottom-grid">
+      <!-- TOP 5 DONÁTORŮ -->
+      <section class="card">
+        <div class="card-header">
+          <h2 class="card-title">🏆 Top 5 donátorů</h2>
+          <div class="card-subtitle">podle Kč celkem 💜</div>
+        </div>
+        <div class="donors-table">
+          <table>
+            <thead>
+              <tr>
+                <th>#</th>
+                <th>Jméno</th>
+                <th>Kč celkem</th>
+                <th>Přidaný čas</th>
+              </tr>
+            </thead>
+            <tbody id="topTableBody">
+              <!-- Naplní JS -->
+            </tbody>
+          </table>
         </div>
       </section>
 
