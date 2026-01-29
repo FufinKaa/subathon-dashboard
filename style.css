@@ -141,11 +141,9 @@ h1{
 .grid{
   display: grid;
   grid-template-columns: 320px 1fr 320px;
-  grid-template-rows: auto auto auto auto;
   grid-template-areas:
     "hero hero hero"
     "leftCol midCol rightCol"
-    "stream stream stream"
     "wide wide wide";
   gap: 20px;
   padding-bottom: 34px;
@@ -155,7 +153,6 @@ h1{
 .leftCol { grid-area: leftCol; }
 .midCol { grid-area: midCol; }
 .rightCol { grid-area: rightCol; }
-#liveStreamSection { grid-area: stream; }
 .wide { grid-area: wide; }
 
 .card{
@@ -287,7 +284,9 @@ h2{
   font-size:13px;
 }
 .rules b{ color: var(--text); }
+.ruleIcon{ margin-right: 8px; }
 
+/* GOALS */
 .goals .goalList{
   margin-top: 12px;
   max-height: 320px;
@@ -336,44 +335,73 @@ h2{
   background: linear-gradient(90deg, rgba(110,231,255,.18), rgba(255,255,255,.75));
 }
 
-.socialsCol{
-  display:grid;
-  gap:10px;
+/* TWITCH STREAM A CHAT */
+.rightCol .live-container {
+  display: grid;
+  grid-template-columns: 2fr 1fr;
+  gap: 15px;
+  margin-top: 10px;
 }
 
-.social{
-  display:flex;
-  align-items:center;
-  justify-content:center;
-  text-decoration:none;
-  color:var(--text);
-  font-weight:900;
-  border-radius: 999px;
-  padding: 14px 14px;
-  border:1px solid var(--border);
-  background: rgba(255,255,255,.06);
+.rightCol .twitch-stream,
+.rightCol .twitch-chat {
+  border-radius: 18px;
+  border: 1px solid var(--border);
+  background: rgba(0, 0, 0, 0.3);
+  overflow: hidden;
+  height: 280px;
 }
-.social:hover{ transform: translateY(-1px); }
 
-.social.ig{ background: linear-gradient(90deg, rgba(255,90,200,.20), rgba(255,255,255,.06)); }
-.social.tw{ background: linear-gradient(90deg, rgba(158,123,255,.18), rgba(255,255,255,.06)); }
-.social.yt{ background: linear-gradient(90deg, rgba(110,231,255,.12), rgba(255,255,255,.06)); }
+.rightCol .twitch-stream iframe,
+.rightCol .twitch-chat iframe {
+  width: 100%;
+  height: 100%;
+  display: block;
+  border: none;
+}
 
-.cuteSticker{
-  margin-top: 14px;
+/* SUBGOAL */
+.subGoalList{
+  margin-top: 12px;
+  max-height: 240px;
+  overflow:auto;
+  padding-right: 6px;
+}
+
+.subGoalRow{
   display:flex;
   align-items:center;
   justify-content:space-between;
-  padding: 12px 14px;
-  border-radius: 18px;
-  border:1px dashed rgba(255,255,255,.22);
-  background: rgba(255,255,255,.05);
+  gap:12px;
+  padding: 10px 12px;
+  border-radius: 14px;
+  border:1px solid var(--border);
+  background: rgba(0,0,0,.08);
+  margin-bottom: 8px;
+  font-size: 13px;
 }
-[data-theme="light"] .cuteSticker{ border-color: rgba(0,0,0,.18); }
-.stEmoji{ font-size:18px; }
-.stText{ font-weight:900; color:var(--muted); }
+[data-theme="light"] .subGoalRow{ background: rgba(255,255,255,.55); }
 
-.tableWrap{ overflow:auto; border-radius: 18px; }
+.subGoalRow.done{
+  border-color: rgba(255,90,200,.35);
+  background: linear-gradient(90deg, rgba(255,90,200,.10), rgba(255,255,255,.06));
+}
+[data-theme="light"] .subGoalRow.done{
+  background: linear-gradient(90deg, rgba(255,90,200,.18), rgba(255,255,255,.75));
+}
+
+.subGoalAmount{
+  font-weight:900;
+  color: var(--pink);
+  white-space:nowrap;
+}
+
+/* TABLE */
+.tableWrap{ 
+  overflow:auto; 
+  border-radius: 18px;
+  margin-top: 10px;
+}
 
 .topTable{
   width:100%;
@@ -417,9 +445,11 @@ h2{
   text-align:center;
 }
 
+/* FEED */
 .feed{
   display:grid;
   gap:10px;
+  margin-top: 10px;
 }
 
 .feedRow{
@@ -437,131 +467,62 @@ h2{
   color:var(--muted);
   font-weight:900;
   white-space:nowrap;
+  min-width: 55px;
 }
 
 .feedText{
   font-weight:700;
   line-height:1.25;
+  flex: 1;
 }
 
-/* ===== TWITCH STREAM A CHAT ===== */
-#liveStreamSection .live-container {
-  display: grid;
-  grid-template-columns: 2fr 1fr;
-  gap: 20px;
-  margin-top: 15px;
+.feedAmount{
+  color: var(--cyan);
+  font-weight: 800;
+  white-space: nowrap;
 }
 
-#liveStreamSection .twitch-stream,
-#liveStreamSection .twitch-chat {
-  border-radius: 18px;
-  border: 1px solid var(--border);
-  background: rgba(0, 0, 0, 0.3);
-  overflow: hidden;
-  height: 500px;
-}
-
-#liveStreamSection .twitch-stream iframe,
-#liveStreamSection .twitch-chat iframe {
-  width: 100%;
-  height: 100%;
-  display: block;
-  border: none;
-}
-
-/* ===== RESPONSIVE ===== */
-@media (max-width: 1200px) {
-  .grid {
-    grid-template-columns: 1fr;
+/* RESPONSIVE */
+@media (max-width: 1200px){
+  .grid{ 
+    grid-template-columns: 1fr; 
     grid-template-areas:
       "hero"
       "leftCol"
       "midCol"
       "rightCol"
-      "stream"
       "wide";
   }
-  
-  .heroGrid {
-    grid-template-columns: 1fr;
-  }
+  .heroGrid{ grid-template-columns: 1fr; }
 }
 
-@media (max-width: 768px) {
-  .header {
+@media (max-width: 768px){
+  .header{
     flex-direction: column;
     align-items: flex-start;
     gap: 15px;
   }
   
-  .headRight {
+  .headRight{
     width: 100%;
     justify-content: space-between;
   }
   
-  #liveStreamSection .live-container {
+  .rightCol .live-container{
     grid-template-columns: 1fr;
   }
   
-  #liveStreamSection .twitch-stream,
-  #liveStreamSection .twitch-chat {
-    height: 350px;
+  .rightCol .twitch-stream,
+  .rightCol .twitch-chat{
+    height: 200px;
   }
   
-  .barRow {
+  .barRow{
     grid-template-columns: 1fr;
     gap: 8px;
   }
   
-  .barPct {
+  .barPct{
     text-align: left;
-  }
-}
-
-/* ===== STREAM INFO ===== */
-.streamInfo {
-  margin-top: 15px;
-  padding: 12px;
-  background: rgba(255, 255, 255, 0.05);
-  border-radius: 12px;
-  display: flex;
-  gap: 20px;
-  align-items: center;
-}
-
-.streamInfo div {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  font-weight: 600;
-  font-size: 14px;
-}
-
-/* ===== RESPONSIVE PRO TWITCH V PRAVÉM SLOUPCI ===== */
-@media (max-width: 1200px) {
-  .rightCol .live-container {
-    grid-template-columns: 2fr 1fr;
-  }
-  
-  .rightCol .twitch-stream,
-  .rightCol .twitch-chat {
-    height: 300px;
-  }
-}
-
-@media (max-width: 768px) {
-  .rightCol .live-container {
-    grid-template-columns: 1fr;
-  }
-  
-  .rightCol .twitch-stream,
-  .rightCol .twitch-chat {
-    height: 250px;
-  }
-  
-  .streamInfo {
-    flex-direction: column;
-    gap: 10px;
-    align-items: flex-start;
   }
 }
