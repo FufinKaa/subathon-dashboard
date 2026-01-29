@@ -1,3 +1,4 @@
+
 // ============================
 // FUFATHON Dashboard - FINÁLNÍ OPRAVENÁ VERZE
 // ============================
@@ -815,7 +816,7 @@ function initDashboard() {
   loadFromLocalStorageOnly();
   
   connectStreamElements();
-  addManualTestButtons();
+ // addManualTestButtons();  // TOTO ZAKOMENTUJ!
   
   // ⚠️ VYPNUTO auto-refresh z API
   setInterval(updateTimers, 1000);
