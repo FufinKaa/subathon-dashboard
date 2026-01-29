@@ -1,5 +1,5 @@
 // ============================
-// FUFATHON Dashboard
+// FUFATHON Dashboard - Nový design
 // ============================
 
 const API_STATE = "https://fufathon-api.pajujka191.workers.dev/api/state";
@@ -9,29 +9,8 @@ const SE_JWT_TOKEN = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJjaXRhZGVsI
 
 const SUB_MINUTES = { 1: 10, 2: 20, 3: 30 };
 
-// DONATEGOAL (původní)
+// DONATEGOAL (podle screenshotu)
 const GOALS = [
-  { amount: 5000, icon: "🎬", title: "Movie night" },
-  { amount: 10000, icon: "😏", title: "Q&A bez cenzury" },
-  { amount: 15000, icon: "👻", title: "Horror Night" },
-  { amount: 20000, icon: "🍔", title: "Jídlo podle chatu" },
-  { amount: 25000, icon: "🤡", title: "Kostým stream" },
-  { amount: 30000, icon: "💃", title: "Just Dance" },
-  { amount: 35000, icon: "🧱", title: "Lego" },
-  { amount: 40000, icon: "🍣", title: "Asijská ochutnávka" },
-  { amount: 45000, icon: "⛏️", title: "Minecraft SpeedRun DUO" },
-  { amount: 50000, icon: "🎤", title: "Karaoke stream" },
-  { amount: 55000, icon: "🔫", title: "Battle Royale Challenge" },
-  { amount: 60000, icon: "🎳", title: "Bowling" },
-  { amount: 65000, icon: "💦", title: "Try Not To Laugh" },
-  { amount: 70000, icon: "👣", title: "Běžecký pás" },
-  { amount: 75000, icon: "🍹", title: "Drunk Stream" },
-  { amount: 80000, icon: "🧍‍♀️", title: "12h Stream ve stoje" },
-  { amount: 85000, icon: "🕹️", title: "Split Fiction w/ Juraj" },
-  { amount: 90000, icon: "🎁", title: "Mystery box opening" },
-  { amount: 95000, icon: "🏆", title: "Turnaj v LoLku" },
-  { amount: 100000, icon: "🎉", title: "Stodolní ve stylu" },
-  { amount: 110000, icon: "🏎️", title: "Motokáry" },
   { amount: 120000, icon: "🎧", title: "ASMR stream" },
   { amount: 125000, icon: "⚡", title: "Bolt Tower" },
   { amount: 130000, icon: "🥶", title: "Otužování" },
@@ -44,18 +23,14 @@ const GOALS = [
   { amount: 200000, icon: "🏙️", title: "Víkend v Praze" },
 ];
 
-// SUBGOAL (nový)
+// SUBGOAL (podle screenshotu)
 const SUB_GOALS = [
-  { amount: 100, title: "Snídaně podle chatu" },
-  { amount: 200, title: "Make-up challenge" },
-  { amount: 300, title: "Outfit vybíráte vy" },
-  { amount: 400, title: "Kontrola váhy od teď" },
-  { amount: 500, title: "1v1 s chatem" },
-  { amount: 600, title: "Vybíráte hru na hlavní blok dne" },
-  { amount: 700, title: "Rozhoduje o dni" },
-  { amount: 800, title: "Luxusní restaurace v Ostravě" },
-  { amount: 900, title: "Turnaj ve Fortnite" },
-  { amount: 1000, title: "Jízda ve sporťáku" }
+  { amount: 100, icon: "🍳", title: "Snídaně podle chatu" },
+  { amount: 200, icon: "💄", title: "Make-up challenge" },
+  { amount: 300, icon: "👗", title: "Outfit vybíráte vy" },
+  { amount: 400, icon: "⚖️", title: "Kontrola váhy od teď" },
+  { amount: 500, icon: "⚔️", title: "1v1 s chatem" },
+  { amount: 1000, icon: "🏎️", title: "Subgoal hlavní" },
 ];
 
 // ===== UTILITIES =====
@@ -123,13 +98,12 @@ function renderGoals(money) {
     const done = m >= g.amount;
     
     return `
-      <div class="goalRow ${done ? 'done' : ''}">
-        <div class="goalLeft">
-          <span class="goalCheck">${done ? '✅' : '⬜'}</span>
-          <span class="goalIcon">${g.icon}</span>
-          <span class="goalTitle">${g.title}</span>
+      <div class="goal-item ${done ? 'done' : ''}">
+        <div class="goal-content">
+          <span class="goal-icon">${g.icon}</span>
+          <span class="goal-text">${g.title}</span>
         </div>
-        <div class="goalAmt">${formatKc(g.amount)} Kč</div>
+        <div class="goal-amount">${formatKc(g.amount)} Kč</div>
       </div>
     `;
   }).join('');
@@ -138,7 +112,8 @@ function renderGoals(money) {
   $("#goalHeader").textContent = `${formatKc(m)} / ${formatKc(GOAL_TOTAL)} Kč`;
   
   const goalPercent = Math.min(100, (m / GOAL_TOTAL) * 100);
-  $("#goalBar").style.width = `${goalPercent}%`;
+  $("#moneyProgress").style.width = `${goalPercent}%`;
+  $("#moneyPct").textContent = `${goalPercent.toFixed(1)}%`;
 }
 
 // ===== SUBGOAL RENDER =====
@@ -151,9 +126,12 @@ function renderSubGoals(subsTotal) {
     const done = subs >= g.amount;
     
     return `
-      <div class="subGoalRow ${done ? 'done' : ''}">
-        <span class="goalTitle">${g.title}</span>
-        <span class="subGoalAmount">${g.amount} subs</span>
+      <div class="goal-item ${done ? 'done' : ''}">
+        <div class="goal-content">
+          <span class="goal-icon">${g.icon}</span>
+          <span class="goal-text">${g.title}</span>
+        </div>
+        <div class="goal-amount">${g.amount} subs</div>
       </div>
     `;
   }).join('');
@@ -163,6 +141,7 @@ function renderSubGoals(subsTotal) {
   
   const subGoalPercent = Math.min(100, (subs / SUB_GOAL_TOTAL) * 100);
   $("#subGoalBar").style.width = `${subGoalPercent}%`;
+  $("#subPct").textContent = `${subGoalPercent.toFixed(1)}%`;
 }
 
 // ===== TOP DONORS =====
@@ -176,14 +155,13 @@ function renderTopDonors(donors) {
       <td>${i + 1}</td>
       <td><strong>${donor.user || "Anonym"}</strong></td>
       <td>${formatKc(donor.totalKc || 0)} Kč</td>
-      <td>+${Math.round((donor.addedSec || 0) / 60)} min</td>
     </tr>
   `).join('');
   
   tbody.innerHTML = rows || `
     <tr>
-      <td colspan="4" class="mutedCell">
-        Zatím žádní dárci... buď první! 💜
+      <td colspan="3" class="mutedCell">
+        Zatím žádní dárci...
       </td>
     </tr>
   `;
@@ -223,17 +201,17 @@ function renderActivityFeed(events) {
     }
     
     return `
-      <div class="feedRow">
-        <span class="feedTime">[${time}]</span>
-        <span class="feedText">${icon} ${text}</span>
-        <span class="feedAmount">${amount}</span>
+      <div class="activity-item">
+        <span class="activity-time">[${time}]</span>
+        <span class="activity-content">${icon} ${text}</span>
+        <span class="activity-amount">${amount}</span>
       </div>
     `;
   }).join('');
   
   feed.innerHTML = feedHTML || `
-    <div class="mutedCell">
-      Zatím žádné akce... čekáme na první sub nebo donate! 🎮
+    <div class="activity-item">
+      <span class="activity-content">Zatím žádné akce...</span>
     </div>
   `;
 }
@@ -264,7 +242,6 @@ function connectStreamElements() {
   
   socket.on('event', (data) => {
     console.log('🎬 StreamElements event:', data.listener);
-    // Okamžitá aktualizace feedu při nové události
     fetchDashboardData();
   });
   
@@ -285,25 +262,19 @@ function renderDashboard(data) {
     $("#endsAtText").textContent = `Konec: ${formatDateTime(data.endsAt)}`;
   }
   
-  if (data.startedAt) {
-    const streamedSec = Math.floor((Date.now() - data.startedAt) / 1000);
-    $("#timeRunning").textContent = formatHMS(streamedSec);
-    $("#startedAtText").textContent = `Start: ${formatDateTime(data.startedAt)}`;
-    
-    if (data.endsAt && data.endsAt > data.startedAt) {
-      const percent = Math.min(100, ((Date.now() - data.startedAt) / (data.endsAt - data.startedAt)) * 100);
-      $("#timeProgress").style.width = `${percent}%`;
-      $("#timePct").textContent = `${Math.round(percent)}%`;
-    }
+  // Progress času
+  if (data.startedAt && data.endsAt && data.endsAt > data.startedAt) {
+    const total = data.endsAt - data.startedAt;
+    const elapsed = Date.now() - data.startedAt;
+    const percent = Math.min(100, (elapsed / total) * 100);
+    $("#timeProgress").style.width = `${percent}%`;
+    $("#timePct").textContent = `${Math.round(percent)}%`;
   }
   
   // Peníze
   const money = Number(data.money) || 0;
   $("#money").textContent = `${formatKc(money)} Kč`;
   $("#moneySmall").textContent = `${formatKc(money)} / ${formatKc(GOAL_TOTAL)} Kč`;
-  
-  const moneyPercent = Math.min(100, (money / GOAL_TOTAL) * 100);
-  $("#moneyProgress").style.width = `${moneyPercent}%`;
   
   // Suby
   const t1 = Number(data.t1) || 0;
@@ -339,8 +310,8 @@ function initDashboard() {
   fetchDashboardData();
   connectStreamElements();
   
-  // Auto-refresh každé 3 sekundy
-  setInterval(fetchDashboardData, 3000);
+  // Auto-refresh každé 2 sekundy
+  setInterval(fetchDashboardData, 2000);
 }
 
 // ===== START =====
