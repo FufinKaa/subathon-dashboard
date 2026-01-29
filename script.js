@@ -1,5 +1,5 @@
 // ============================
-// FUFATHON Dashboard - OPRAVENÁ VERZE
+// FUFATHON Dashboard - FINÁLNÍ OPRAVENÁ VERZE
 // ============================
 
 const API_STATE = "https://fufathon-api.pajujka191.workers.dev/api/state";
@@ -104,6 +104,9 @@ function addMinutesToSubathon(minutes) {
   const msToAdd = minutes * 60 * 1000;
   subathonEndTime = new Date(subathonEndTime.getTime() + msToAdd);
   
+  // ✅ ULOŽ ČAS DO localStorage
+  localStorage.setItem('subathonEndTime', subathonEndTime.getTime());
+  
   // Vizuální potvrzení
   showTimeAddedNotification(minutes);
   
@@ -112,7 +115,6 @@ function addMinutesToSubathon(minutes) {
 }
 
 function addTimeForDonate(amountCzk) {
-  // 100 Kč = 15 minut, poměrně
   const minutes = Math.floor((amountCzk / 100) * DONATE_RATE);
   if (minutes > 0) {
     addMinutesToSubathon(minutes);
@@ -125,7 +127,6 @@ function addTimeForSub(tier, count = 1) {
 }
 
 function showTimeAddedNotification(minutes) {
-  // Vytvoříme krátkou notifikaci
   const notification = document.createElement('div');
   notification.className = 'time-added-notification';
   notification.innerHTML = `
@@ -136,7 +137,6 @@ function showTimeAddedNotification(minutes) {
   
   document.body.appendChild(notification);
   
-  // Odstraníme po 3 sekundách
   setTimeout(() => {
     notification.classList.add('fade-out');
     setTimeout(() => notification.remove(), 500);
@@ -346,43 +346,16 @@ function connectStreamElements() {
       return;
     }
     
-    // Zpracování podle typu
     switch (data.type) {
       case 'subscriber':
-        // Nový sub nebo resub
         handleSubscriberEvent(data);
         break;
-        
       case 'subscriber-gift':
-        // Gifted sub
         handleGiftEvent(data);
         break;
-        
       case 'tip':
-        // Donate
         handleTipEvent(data);
         break;
-        
-      case 'follow':
-        // Follow
-        console.log('👤 Nový follow:', data.data.username);
-        break;
-        
-      case 'cheer':
-        // Bits
-        console.log('💎 Bits:', data.data.amount, 'od', data.data.username);
-        break;
-        
-      case 'host':
-        // Host
-        console.log('🏠 Host:', data.data.username);
-        break;
-        
-      case 'raid':
-        // Raid
-        console.log('⚔️ Raid:', data.data.username, 's', data.data.viewers, 'diváky');
-        break;
-        
       default:
         console.log('ℹ️ Nezpracovaný typ:', data.type);
     }
@@ -417,7 +390,6 @@ function handleSubscriberEvent(data) {
   });
   
   if (isGift && gifter) {
-    // Gifted sub
     saveEventToHistory({
       type: 'gift',
       gifter: gifter,
@@ -431,7 +403,6 @@ function handleSubscriberEvent(data) {
     updateSubCount(tier);
     
   } else if (months > 1) {
-    // Resub
     saveEventToHistory({
       type: 'resub',
       username: username,
@@ -445,7 +416,6 @@ function handleSubscriberEvent(data) {
     updateSubCount(tier);
     
   } else {
-    // Nový sub
     saveEventToHistory({
       type: 'sub',
       username: username,
@@ -491,7 +461,6 @@ function handleTipEvent(data) {
   
   console.log('💰 Tip event:', { username, amount, currency, message: message.substring(0, 50) });
   
-  // Převod na CZK
   let amountCzk = amount;
   if (currency === 'USD') amountCzk = amount * 23;
   if (currency === 'EUR') amountCzk = amount * 25;
@@ -513,51 +482,6 @@ function handleTipEvent(data) {
   updateTotalMoney();
 }
 
-// ===== MAIN RENDER =====
-function renderDashboard(data) {
-  if (!data) return;
-  
-  // 1. PENÍZE
-  const money = Number(data.money) || 0;
-  $("#money").textContent = `${formatKc(money)} Kč`;
-  $("#moneySmall").textContent = `${formatKc(money)} / ${formatKc(GOAL_TOTAL)} Kč`;
-  
-  // 2. SUBY
-  const t1 = Number(data.t1) || 0;
-  const t2 = Number(data.t2) || 0;
-  const t3 = Number(data.t3) || 0;
-  const subsTotal = Number(data.subsTotal) || (t1 + t2 + t3);
-  
-  $("#subsTotal").textContent = subsTotal;
-  $("#subsBreak").textContent = `${t1} / ${t2} / ${t3}`;
-  
-  // 3. TIMER - pokud API má svůj endTime, použij ho
-  if (data.endsAt) {
-    const apiEndTime = new Date(data.endsAt);
-    if (apiEndTime > subathonEndTime) {
-      subathonEndTime = apiEndTime;
-    }
-  }
-  
-  // 4. ZBYTEK
-  renderGoals(money);
-  renderSubGoals(subsTotal);
-  renderTopDonors(data.topDonors);
-  renderActivityFeed(data.lastEvents || data.events || []);
-}
-
-// ===== API FETCH =====
-async function fetchDashboardData() {
-  try {
-    const response = await fetch(API_STATE, { cache: "no-store" });
-    if (!response.ok) throw new Error(`API error: ${response.status}`);
-    const data = await response.json();
-    renderDashboard(data);
-  } catch (error) {
-    console.error('Chyba při načítání dat:', error);
-  }
-}
-
 // ===== DATA STORAGE FUNCTIONS =====
 function saveEventToHistory(event) {
   try {
@@ -566,7 +490,6 @@ function saveEventToHistory(event) {
     if (events.length > 50) events = events.slice(0, 50);
     localStorage.setItem('fufathon_events', JSON.stringify(events));
     
-    // Aktualizuj feed
     updateActivityFeed(events);
     console.log('💾 Událost uložena:', event.type);
   } catch (error) {
@@ -607,6 +530,10 @@ function updateSubCount(tier, count = 1) {
     subs[`t${tier}`] += count;
     subs.total += count;
     localStorage.setItem('fufathon_subs', JSON.stringify(subs));
+    
+    // Ulož čas při každém subu
+    localStorage.setItem('subathonEndTime', subathonEndTime.getTime());
+    
     updateSubsDisplay(subs);
     console.log('⭐ Suby aktualizovány:', subs);
   } catch (error) {
@@ -696,7 +623,6 @@ function updateSubsDisplay(subs) {
   $("#subsBreak").textContent = `${subs.t1 || 0} / ${subs.t2 || 0} / ${subs.t3 || 0}`;
   $("#subGoalHeader").textContent = `${subs.total || 0} / ${SUB_GOAL_TOTAL} subs`;
   
-  // Aktualizuj subgoals
   renderSubGoals(subs.total);
 }
 
@@ -705,12 +631,10 @@ function updateTotalMoney() {
     const donors = JSON.parse(localStorage.getItem('fufathon_donors') || '[]');
     const totalMoney = donors.reduce((sum, donor) => sum + (donor.total || 0), 0);
     
-    // Aktualizuj na stránce
     $("#money").textContent = `${formatKc(totalMoney)} Kč`;
     $("#moneySmall").textContent = `${formatKc(totalMoney)} / ${formatKc(GOAL_TOTAL)} Kč`;
     $("#goalHeader").textContent = `${formatKc(totalMoney)} / ${formatKc(GOAL_TOTAL)} Kč`;
     
-    // Aktualizuj goals
     renderGoals(totalMoney);
     
     console.log('💰 Celkové peníze:', totalMoney + ' Kč');
@@ -721,123 +645,57 @@ function updateTotalMoney() {
   }
 }
 
-// ===== LOAD EXISTING DATA =====
-async function loadExistingData() {
+// ===== LOAD FROM LOCALSTORAGE ONLY =====
+function loadFromLocalStorageOnly() {
   try {
-    console.log('🔄 Načítám data...');
+    console.log('📊 Načítám data POUZE z localStorage...');
     
-    // 1. NEJPRVE ZKUS NAČÍST Z localStorage
-    const existingSubs = JSON.parse(localStorage.getItem('fufathon_subs') || '{"t1":0,"t2":0,"t3":0,"total":0}');
-    const existingDonors = JSON.parse(localStorage.getItem('fufathon_donors') || '[]');
-    const existingEvents = JSON.parse(localStorage.getItem('fufathon_events') || '[]');
+    const donors = JSON.parse(localStorage.getItem('fufathon_donors') || '[]');
+    const events = JSON.parse(localStorage.getItem('fufathon_events') || '[]');
+    const subs = JSON.parse(localStorage.getItem('fufathon_subs') || '{"t1":0,"t2":0,"t3":0,"total":0}');
     
-    // Pokud už máš data v localStorage (suby nebo donoři), POUŽIJ JE
-    if (existingSubs.total > 0 || existingDonors.length > 0) {
-      console.log('📊 Používám existující data z localStorage:', {
-        subs: existingSubs,
-        donorsCount: existingDonors.length,
-        eventsCount: existingEvents.length
+    // NAČTI ULOŽENÝ ČAS
+    const savedEndTime = localStorage.getItem('subathonEndTime');
+    if (savedEndTime) {
+      subathonEndTime = new Date(Number(savedEndTime));
+      console.log('🕒 Čas obnoven z localStorage:', subathonEndTime.toLocaleString());
+    }
+    
+    // PŘEPOČÍTEJ TIERY Z UDÁLOSTÍ (pokud jsou všechny 0)
+    if (subs.t1 === 0 && subs.t2 === 0 && subs.t3 === 0 && events.length > 0) {
+      console.log('🔄 Přepočítávám tier z událostí...');
+      events.forEach(event => {
+        if (event.type === 'sub' || event.type === 'resub' || event.type === 'gift') {
+          const tier = event.tier || 1;
+          const count = event.count || 1;
+          subs[`t${tier}`] += count;
+          subs.total += count;
+        }
       });
-      
-      // Aktualizuj UI přímo z localStorage
-      updateTopDonorsTable(existingDonors);
-      updateActivityFeed(existingEvents);
-      updateSubsDisplay(existingSubs);
-      updateTotalMoney();
-      
-      console.log('✅ UI aktualizováno z localStorage');
-      return; // DŮLEŽITÉ: UKONČI FUNKCI ZDE – API NENAČÍTEJ!
+      localStorage.setItem('fufathon_subs', JSON.stringify(subs));
     }
     
-    console.log('📭 localStorage je prázdný, načítám z API...');
+    updateTopDonorsTable(donors);
+    updateActivityFeed(events);
+    updateSubsDisplay(subs);
+    updateTotalMoney();
     
-    // 2. POUZE pokud je localStorage prázdný, načti z API
-    const apiResponse = await fetch(API_STATE, { cache: "no-store" });
-    
-    if (apiResponse.ok) {
-      const apiData = await apiResponse.json();
-      
-      // A) Donátoři z API -> localStorage
-      const donorsFromAPI = (apiData.topDonors || []).map(d => ({
-        username: d.user || "Anonym",
-        total: d.totalKc || 0,
-        addedMinutes: Math.round((d.addedSec || 0) / 60)
-      }));
-      localStorage.setItem('fufathon_donors', JSON.stringify(donorsFromAPI));
-      
-      // B) Suby z API -> localStorage
-      const subsFromAPI = {
-        t1: apiData.t1 || 0,
-        t2: apiData.t2 || 0,
-        t3: apiData.t3 || 0,
-        total: apiData.subsTotal || 0
-      };
-      localStorage.setItem('fufathon_subs', JSON.stringify(subsFromAPI));
-      
-      // C) Události z API -> localStorage
-      const eventsFromAPI = (apiData.lastEvents || []).map(e => ({
-        timestamp: e.ts || Date.now(),
-        type: mapApiEventKindToLocal(e.kind),
-        username: e.sender || 'Anonym',
-        amount: e.amountKc || 0,
-        tier: e.tier || 1,
-        months: e.months || 1,
-        count: e.count || 1,
-        gifter: e.sender || 'Anonym',
-        addedMinutes: calculateAddedMinutes(e)
-      }));
-      
-      // Sloučit s existujícími událostmi (max 50)
-      const mergedEvents = [...eventsFromAPI, ...existingEvents]
-        .filter((v, i, a) => a.findIndex(e => e.timestamp === v.timestamp) === i)
-        .slice(0, 50);
-      localStorage.setItem('fufathon_events', JSON.stringify(mergedEvents));
-      
-      console.log('🔄 Data načtena z API a uložena do localStorage');
-      
-      // Aktualizuj UI
-      updateTopDonorsTable(donorsFromAPI);
-      updateActivityFeed(mergedEvents);
-      updateSubsDisplay(subsFromAPI);
-      updateTotalMoney();
-      
-      console.log('✅ UI aktualizováno z API');
-    } else {
-      console.warn('⚠️ API neodpovědělo, používám prázdná data');
-    }
+    console.log('✅ Data načtena z localStorage:', {
+      t1: subs.t1,
+      t2: subs.t2,
+      t3: subs.t3,
+      total: subs.total,
+      donors: donors.length,
+      events: events.length
+    });
     
   } catch (error) {
-    console.error('❌ Chyba při načítání dat:', error);
+    console.error('❌ Chyba při načítání z localStorage:', error);
   }
-}
-
-// Pomocná funkce pro mapování druhů událostí
-function mapApiEventKindToLocal(kind) {
-  const map = {
-    'donation': 'donation',
-    'sub': 'sub',
-    'resub': 'resub',
-    'gift': 'gift',
-    'system': 'system'
-  };
-  return map[kind] || 'system';
-}
-
-// Pomocná funkce pro výpočet minut
-function calculateAddedMinutes(event) {
-  if (event.kind === 'donation') {
-    return Math.floor((event.amountKc / 100) * 15);
-  } else if (event.kind === 'sub' || event.kind === 'resub') {
-    return SUB_MINUTES[event.tier] || 10;
-  } else if (event.kind === 'gift') {
-    return (SUB_MINUTES[event.tier] || 10) * (event.count || 1);
-  }
-  return 0;
 }
 
 // ===== MANUAL TEST FUNCTIONS =====
 function addManualTestButtons() {
-  // Vytvoříme testovací panel
   const testPanel = document.createElement('div');
   testPanel.id = 'testPanel';
   testPanel.style.cssText = `
@@ -898,15 +756,12 @@ function addManualTestButtons() {
   console.log('✅ Testovací panel přidán');
 }
 
-// Testovací funkce
 function testDonate(amount, username = 'TEST_USER') {
   console.log(`🧪 TEST Donate: ${amount} Kč od ${username}`);
   
-  // 1. Přidej čas
   const minutes = Math.floor((amount / 100) * 15);
   addMinutesToSubathon(minutes);
   
-  // 2. Ulož událost
   saveEventToHistory({
     type: 'donation',
     username: username,
@@ -917,13 +772,8 @@ function testDonate(amount, username = 'TEST_USER') {
     addedMinutes: minutes
   });
   
-  // 3. Aktualizuj top donátory
   updateTopDonors(username, amount);
-  
-  // 4. Aktualizuj peníze
   updateTotalMoney();
-  
-  // 5. Zobraz notifikaci
   showTimeAddedNotification(minutes);
   
   console.log(`✅ Přidáno ${minutes} minut`);
@@ -932,11 +782,9 @@ function testDonate(amount, username = 'TEST_USER') {
 function testSub(tier, username = 'SUB_USER') {
   console.log(`🧪 TEST Sub: T${tier} od ${username}`);
   
-  // 1. Přidej čas
   const minutes = SUB_MINUTES[tier] || 10;
   addMinutesToSubathon(minutes);
   
-  // 2. Ulož událost
   saveEventToHistory({
     type: 'sub',
     username: username,
@@ -947,10 +795,7 @@ function testSub(tier, username = 'SUB_USER') {
     addedMinutes: minutes
   });
   
-  // 3. Aktualizuj počty subů
   updateSubCount(tier);
-  
-  // 4. Zobraz notifikaci
   showTimeAddedNotification(minutes);
   
   console.log(`✅ Přidáno ${minutes} minut`);
@@ -959,11 +804,9 @@ function testSub(tier, username = 'SUB_USER') {
 function testGiftSub(tier, count, gifter = 'GIFTER_USER') {
   console.log(`🧪 TEST Gift Sub: ${count}× T${tier} od ${gifter}`);
   
-  // 1. Přidej čas
   const minutes = (SUB_MINUTES[tier] || 10) * count;
   addMinutesToSubathon(minutes);
   
-  // 2. Ulož událost
   saveEventToHistory({
     type: 'gift',
     gifter: gifter,
@@ -974,10 +817,7 @@ function testGiftSub(tier, count, gifter = 'GIFTER_USER') {
     addedMinutes: minutes
   });
   
-  // 3. Aktualizuj počty subů
   updateSubCount(tier, count);
-  
-  // 4. Zobraz notifikaci
   showTimeAddedNotification(minutes);
   
   console.log(`✅ Přidáno ${minutes} minut`);
@@ -988,8 +828,8 @@ function resetTestData() {
     localStorage.removeItem('fufathon_events');
     localStorage.removeItem('fufathon_donors');
     localStorage.removeItem('fufathon_subs');
+    localStorage.removeItem('subathonEndTime');
     
-    // Resetuj zobrazení
     updateActivityFeed([]);
     updateTopDonorsTable([]);
     updateSubsDisplay({t1: 0, t2: 0, t3: 0, total: 0});
@@ -999,38 +839,10 @@ function resetTestData() {
   }
 }
 
-// ===== LOAD FROM LOCALSTORAGE ONLY =====
-function loadFromLocalStorageOnly() {
-  try {
-    console.log('📊 Načítám data POUZE z localStorage...');
-    
-    // Načti všechna data z localStorage
-    const donors = JSON.parse(localStorage.getItem('fufathon_donors') || '[]');
-    const events = JSON.parse(localStorage.getItem('fufathon_events') || '[]');
-    const subs = JSON.parse(localStorage.getItem('fufathon_subs') || '{"t1":0,"t2":0,"t3":0,"total":0}');
-    
-    // Aktualizuj UI
-    updateTopDonorsTable(donors);
-    updateActivityFeed(events);
-    updateSubsDisplay(subs);
-    updateTotalMoney();
-    
-    console.log('✅ Data načtena z localStorage:', {
-      subs: subs.total,
-      donors: donors.length,
-      events: events.length
-    });
-    
-  } catch (error) {
-    console.error('❌ Chyba při načítání z localStorage:', error);
-  }
-}
-
 // ===== INITIALIZATION =====
 function initDashboard() {
   initTheme();
   
-  // Přidej CSS pro notifikace
   const style = document.createElement('style');
   style.textContent = `
     .time-added-notification {
@@ -1070,28 +882,18 @@ function initDashboard() {
   `;
   document.head.appendChild(style);
   
-  // Inicializuj timery
   updateTimers();
   
-  // 🚨 DŮLEŽITÉ: ZCELA VYPNUTO NAČÍTÁNÍ Z API
-  // NENÍ TU volání loadExistingData() ani fetchDashboardData()
-  
-  // Místo toho načti POUZE z localStorage
+  // ✅ DŮLEŽITÉ: Načti data POUZE z localStorage
   loadFromLocalStorageOnly();
   
-  // Připoj StreamElements
   connectStreamElements();
-
-  // ✅ PŘIDEJ TESTOVACÍ PANEL
   addManualTestButtons();
   
-  // ⚠️ DŮLEŽITÉ: VYPNUTO auto-refresh
-  // setInterval(fetchDashboardData, 5000); // ZAKOMENTOVÁNO!
-  
-  // Aktualizuj timery každou sekundu
+  // ⚠️ VYPNUTO auto-refresh z API
   setInterval(updateTimers, 1000);
   
-  console.log('🚀 Dashboard inicializován! (pouze localStorage, žádné API)');
+  console.log('🚀 Dashboard inicializován! (pouze localStorage)');
 }
 
 // ===== START =====
