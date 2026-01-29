@@ -429,95 +429,189 @@ async function fetchDashboardData() {
   }
 }
 
-// ===== INITIALIZATION =====
-function initDashboard() {
-  initTheme();
+// ===== DATA STORAGE FUNCTIONS =====
+function saveEventToHistory(event) {
+  try {
+    let events = JSON.parse(localStorage.getItem('fufathon_events') || '[]');
+    events.unshift(event);
+    if (events.length > 50) events = events.slice(0, 50);
+    localStorage.setItem('fufathon_events', JSON.stringify(events));
+    
+    // Aktualizuj feed
+    updateActivityFeed(events);
+    console.log('💾 Událost uložena:', event.type);
+  } catch (error) {
+    console.error('❌ Chyba při ukládání události:', error);
+  }
+}
+
+function updateTopDonors(username, amount) {
+  try {
+    let donors = JSON.parse(localStorage.getItem('fufathon_donors') || '[]');
+    
+    const existingIndex = donors.findIndex(d => d.username === username);
+    if (existingIndex >= 0) {
+      donors[existingIndex].total += amount;
+      donors[existingIndex].addedMinutes += Math.floor((amount / 100) * 15);
+    } else {
+      donors.push({
+        username: username,
+        total: amount,
+        addedMinutes: Math.floor((amount / 100) * 15)
+      });
+    }
+    
+    donors.sort((a, b) => b.total - a.total);
+    if (donors.length > 20) donors = donors.slice(0, 20);
+    
+    localStorage.setItem('fufathon_donors', JSON.stringify(donors));
+    updateTopDonorsTable(donors);
+    console.log('🏆 Donátor aktualizován:', username, amount + ' Kč');
+  } catch (error) {
+    console.error('❌ Chyba při aktualizaci donátorů:', error);
+  }
+}
+
+function updateSubCount(tier, count = 1) {
+  try {
+    let subs = JSON.parse(localStorage.getItem('fufathon_subs') || '{"t1":0,"t2":0,"t3":0,"total":0}');
+    subs[`t${tier}`] += count;
+    subs.total += count;
+    localStorage.setItem('fufathon_subs', JSON.stringify(subs));
+    updateSubsDisplay(subs);
+    console.log('⭐ Suby aktualizovány:', subs);
+  } catch (error) {
+    console.error('❌ Chyba při aktualizaci subů:', error);
+  }
+}
+
+// ===== UI UPDATE FUNCTIONS =====
+function updateActivityFeed(events) {
+  const feed = $("#feed");
+  if (!feed) return;
   
-  // Přidej CSS pro notifikace
-  const style = document.createElement('style');
-  style.textContent = `
-    .time-added-notification {
-      position: fixed;
-      top: 20px;
-      right: 20px;
-      background: linear-gradient(135deg, #7b2ff7, #f107a3);
-      color: white;
-      padding: 15px 20px;
-      border-radius: 12px;
-      z-index: 9999;
-      box-shadow: 0 5px 20px rgba(123, 47, 247, 0.5);
-      animation: slideIn 0.5s ease-out;
-      font-family: inherit;
-      max-width: 300px;
+  const feedHTML = events.slice(0, 10).map(event => {
+    const time = new Date(event.timestamp).toLocaleTimeString("cs-CZ", { 
+      hour: "2-digit", 
+      minute: "2-digit" 
+    });
+    
+    let icon = "⚡";
+    let text = "";
+    let amount = `+${event.addedMinutes || 0} min`;
+    
+    switch (event.type) {
+      case 'donation':
+        icon = "💰";
+        text = `Donate ${formatKc(event.amount)} Kč od ${event.username}`;
+        break;
+      case 'sub':
+        icon = "⭐";
+        text = `${event.username} si pořídil sub (T${event.tier})`;
+        break;
+      case 'resub':
+        icon = "🔁";
+        text = `${event.username} resub (${event.months} měs.)`;
+        break;
+      case 'gift':
+        icon = "🎁";
+        text = `${event.gifter} daroval ${event.count}× sub`;
+        break;
     }
     
-    .notification-content {
-      display: flex;
-      align-items: center;
-      gap: 10px;
-      font-size: 16px;
-    }
-    
-    @keyframes slideIn {
-      from { transform: translateX(100%); opacity: 0; }
-      to { transform: translateX(0); opacity: 1; }
-    }
-    
-    .fade-out {
-      animation: fadeOut 0.5s ease-out forwards;
-    }
-    
-    @keyframes fadeOut {
-      to { opacity: 0; transform: translateY(-20px); }
-    }
+    return `
+      <div class="activity-item">
+        <span class="activity-time">[${time}]</span>
+        <span class="activity-text">${icon} ${text}</span>
+        <span class="activity-amount">${amount}</span>
+      </div>
+    `;
+  }).join('');
+  
+  feed.innerHTML = feedHTML || `
+    <div class="activity-item">
+      <span class="activity-text">Zatím žádné akce...</span>
+    </div>
   `;
-  document.head.appendChild(style);
-  
-  // Inicializuj timery
-  updateTimers();
-  
-  // Načti data z API
-  fetchDashboardData();
-  
-  // Připoj StreamElements
-  connectStreamElements();
-
-  function initDashboard() {
-  initTheme();
-  
-  // Přidej CSS pro notifikace
-  addNotificationStyles();
-  
-  // Inicializuj timery
-  updateTimers();
-  
-  // Načti data z API (pokud existuje)
-  fetchDashboardData();
-  
-  // Připoj StreamElements
-  connectStreamElements();
-  
-  // ✅ PŘIDEJ TENTO ŘÁDEK:
-  addManualTestButtons(); // Testovací panel vpravo dole
-  
-  // Auto-refresh
-  setInterval(fetchDashboardData, 5000); // Každých 5s
-  
-  // Aktualizuj timery každou sekundu
-  setInterval(updateTimers, 1000);
-}
-  
-  // Auto-refresh každé 2 sekundy
-  setInterval(fetchDashboardData, 2000);
-  
-  // Aktualizuj timery každou sekundu
-  setInterval(updateTimers, 1000);
 }
 
-// ===== START =====
-document.addEventListener("DOMContentLoaded", initDashboard);
+function updateTopDonorsTable(donors) {
+  const tbody = $("#topTableBody");
+  if (!tbody) return;
+  
+  const top5 = donors.slice(0, 5);
+  
+  const rowsHTML = top5.map((donor, index) => `
+    <tr>
+      <td>${index + 1}</td>
+      <td><strong>${donor.username}</strong></td>
+      <td>${formatKc(donor.total)} Kč</td>
+      <td>+${donor.addedMinutes || 0} min</td>
+    </tr>
+  `).join('');
+  
+  tbody.innerHTML = rowsHTML || `
+    <tr>
+      <td colspan="4" class="mutedCell">
+        Zatím žádní dárci... buď první! 💜
+      </td>
+    </tr>
+  `;
+}
 
+function updateSubsDisplay(subs) {
+  $("#subsTotal").textContent = subs.total || 0;
+  $("#subsBreak").textContent = `${subs.t1 || 0} / ${subs.t2 || 0} / ${subs.t3 || 0}`;
+  $("#subGoalHeader").textContent = `${subs.total || 0} / ${SUB_GOAL_TOTAL} subs`;
+  
+  // Aktualizuj subgoals
+  renderSubGoals(subs.total);
+}
 
+function updateTotalMoney() {
+  try {
+    const donors = JSON.parse(localStorage.getItem('fufathon_donors') || '[]');
+    const totalMoney = donors.reduce((sum, donor) => sum + donor.total, 0);
+    
+    // Aktualizuj na stránce
+    $("#money").textContent = `${formatKc(totalMoney)} Kč`;
+    $("#moneySmall").textContent = `${formatKc(totalMoney)} / ${formatKc(GOAL_TOTAL)} Kč`;
+    $("#goalHeader").textContent = `${formatKc(totalMoney)} / ${formatKc(GOAL_TOTAL)} Kč`;
+    
+    // Aktualizuj goals
+    renderGoals(totalMoney);
+    
+    console.log('💰 Celkové peníze:', totalMoney + ' Kč');
+    return totalMoney;
+  } catch (error) {
+    console.error('❌ Chyba při výpočtu peněz:', error);
+    return 0;
+  }
+}
+
+// ===== LOAD EXISTING DATA =====
+function loadExistingData() {
+  try {
+    // Načti donátory
+    const donors = JSON.parse(localStorage.getItem('fufathon_donors') || '[]');
+    updateTopDonorsTable(donors);
+    
+    // Načti události
+    const events = JSON.parse(localStorage.getItem('fufathon_events') || '[]');
+    updateActivityFeed(events);
+    
+    // Načti suby
+    const subs = JSON.parse(localStorage.getItem('fufathon_subs') || '{"t1":0,"t2":0,"t3":0,"total":0}');
+    updateSubsDisplay(subs);
+    
+    // Spočítej peníze
+    updateTotalMoney();
+    
+    console.log('📊 Existující data načtena');
+  } catch (error) {
+    console.error('❌ Chyba při načítání dat:', error);
+  }
+}
 
 // ===== MANUAL TEST FUNCTIONS =====
 function addManualTestButtons() {
@@ -579,6 +673,7 @@ function addManualTestButtons() {
   `;
   
   document.body.appendChild(testPanel);
+  console.log('✅ Testovací panel přidán');
 }
 
 // Testovací funkce
@@ -681,3 +776,74 @@ function resetTestData() {
     alert('✅ Testovací data smazána!');
   }
 }
+
+// ===== INITIALIZATION =====
+function initDashboard() {
+  initTheme();
+  
+  // Přidej CSS pro notifikace
+  const style = document.createElement('style');
+  style.textContent = `
+    .time-added-notification {
+      position: fixed;
+      top: 20px;
+      right: 20px;
+      background: linear-gradient(135deg, #7b2ff7, #f107a3);
+      color: white;
+      padding: 15px 20px;
+      border-radius: 12px;
+      z-index: 9999;
+      box-shadow: 0 5px 20px rgba(123, 47, 247, 0.5);
+      animation: slideIn 0.5s ease-out;
+      font-family: inherit;
+      max-width: 300px;
+    }
+    
+    .notification-content {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-size: 16px;
+    }
+    
+    @keyframes slideIn {
+      from { transform: translateX(100%); opacity: 0; }
+      to { transform: translateX(0); opacity: 1; }
+    }
+    
+    .fade-out {
+      animation: fadeOut 0.5s ease-out forwards;
+    }
+    
+    @keyframes fadeOut {
+      to { opacity: 0; transform: translateY(-20px); }
+    }
+  `;
+  document.head.appendChild(style);
+  
+  // Inicializuj timery
+  updateTimers();
+  
+  // Načti existující data
+  loadExistingData();
+  
+  // Načti data z API
+  fetchDashboardData();
+  
+  // Připoj StreamElements
+  connectStreamElements();
+
+  // ✅ PŘIDEJ TESTOVACÍ PANEL
+  addManualTestButtons();
+  
+  // Auto-refresh
+  setInterval(fetchDashboardData, 5000);
+  
+  // Aktualizuj timery každou sekundu
+  setInterval(updateTimers, 1000);
+  
+  console.log('🚀 Dashboard inicializován!');
+}
+
+// ===== START =====
+document.addEventListener("DOMContentLoaded", initDashboard);
