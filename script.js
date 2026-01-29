@@ -659,21 +659,6 @@ function loadFromLocalStorageOnly() {
     if (savedEndTime) {
       subathonEndTime = new Date(Number(savedEndTime));
       console.log('🕒 Čas obnoven z localStorage:', subathonEndTime.toLocaleString());
-    }
-    
-    // PŘEPOČÍTEJ TIERY Z UDÁLOSTÍ (pokud jsou všechny 0)
-    if (subs.t1 === 0 && subs.t2 === 0 && subs.t3 === 0 && events.length > 0) {
-      console.log('🔄 Přepočítávám tier z událostí...');
-      events.forEach(event => {
-        if (event.type === 'sub' || event.type === 'resub' || event.type === 'gift') {
-          const tier = event.tier || 1;
-          const count = event.count || 1;
-          subs[`t${tier}`] += count;
-          subs.total += count;
-        }
-      });
-      localStorage.setItem('fufathon_subs', JSON.stringify(subs));
-    }
     
     updateTopDonorsTable(donors);
     updateActivityFeed(events);
