@@ -815,8 +815,14 @@ function initDashboard() {
   // ✅ DŮLEŽITÉ: Načti data POUZE z localStorage
   loadFromLocalStorageOnly();
   
-  connectStreamElements();
- // addManualTestButtons();  // TOTO ZAKOMENTUJ!
+  // Připoj StreamElements
+connectStreamElements();
+
+// ✅ PŘIDEJ TESTOVACÍ PANEL
+// addManualTestButtons();  // ZAKOMENTOVÁNO!
+
+// ⚠️ DŮLEŽITÉ: VYPNUTO auto-refresh
+// setInterval(fetchDashboardData, 5000); // ZAKOMENTOVÁNO!
   
   // ⚠️ VYPNUTO auto-refresh z API
   setInterval(updateTimers, 1000);
