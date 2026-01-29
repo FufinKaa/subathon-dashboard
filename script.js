@@ -119,11 +119,13 @@ function renderGoals(money) {
   if (!list) return;
   
   const goalsHTML = GOALS.map(g => {
+    const done = m >= g.amount;
+    
     return `
-      <div class="goal-row">
+      <div class="goal-row ${done ? 'done' : ''}">
         <div class="goal-name">
-          <span>${g.icon}</span>
-          <span>${g.title}</span>
+          <span class="goal-check">${done ? '✅' : '⬜'}</span>
+          <span class="goal-name-text">${g.icon} ${g.title}</span>
         </div>
         <div class="goal-amount">${formatKc(g.amount)} Kč</div>
       </div>
@@ -141,11 +143,13 @@ function renderSubGoals(subsTotal) {
   if (!list) return;
   
   const subGoalsHTML = SUB_GOALS.map(g => {
+    const done = subs >= g.amount;
+    
     return `
-      <div class="goal-row">
+      <div class="goal-row ${done ? 'done' : ''}">
         <div class="goal-name">
-          <span>${g.icon}</span>
-          <span>${g.title}</span>
+          <span class="goal-check">${done ? '✅' : '⬜'}</span>
+          <span class="goal-name-text">${g.icon} ${g.title}</span>
         </div>
         <div class="goal-amount">${g.amount} subs</div>
       </div>
