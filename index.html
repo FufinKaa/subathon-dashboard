@@ -1,237 +1,215 @@
-<!DOCTYPE html>
-<html lang="cs" data-theme="dark">
+<!doctype html>
+<html lang="cs">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>FUFATHON Dashboard</title>
-    
-    <!-- StreamElements socket.io -->
-    <script src="https://cdn.jsdelivr.net/npm/socket.io-client@4/dist/socket.io.min.js"></script>
-    
-    <!-- Styly -->
-    <link rel="stylesheet" href="style.css">
-    
-    <!-- Twitch Embed -->
-    <script src="https://embed.twitch.tv/embed/v1.js"></script>
-    
-    <!-- Font Awesome pro ikony -->
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    
-    <!-- Google Fonts -->
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&family=Roboto+Mono:wght@400;500&display=swap" rel="stylesheet">
-    
-    <link rel="icon" type="image/x-icon" href="https://static-cdn.jtvnw.net/jtv_user_pictures/fufinkaa-profile_image-7d3c13f2bbf9a7fa-300x300.png">
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>FUFATHON Dashboard</title>
+  <link rel="stylesheet" href="./style.css" />
+  <script src="https://cdn.socket.io/4.5.0/socket.io.min.js"></script>
 </head>
-<body>
-    <div class="container">
-        <!-- HEADER -->
-        <header class="dashboard-header">
-            <div class="header-left">
-                <h1><i class="fas fa-fire" style="color: #f107a3;"></i> FUFATHON Dashboard</h1>
-                <p class="subtitle">přehled o všem <span class="sparkle">✨</span></p>
-            </div>
-            
-            <div class="header-right">
-                <div class="status-badge live">
-                    <span class="pulse"></span>
-                    <span>LIVE</span>
-                </div>
-                
-                <button id="themeBtn" class="theme-toggle">
-                    <span id="themeIcon">🌙</span>
-                    <span id="themeText">Noc</span>
-                </button>
-            </div>
-        </header>
 
-        <!-- MAIN GRID -->
-        <div class="dashboard-grid">
-            
-            <!-- LEVÝ SLOUPEC -->
-            <div class="left-column">
-                
-                <!-- TIMER SECTION -->
-                <div class="card timer-card">
-                    <h2><i class="fas fa-clock"></i> DO KONCE ZBÝVÁ</h2>
-                    <div class="timer-display" id="timeLeft">280:00:00</div>
-                    <p class="timer-label" id="endsAtText">Konec: 10. 02. 2026 14:00</p>
-                    
-                    <div class="time-progress">
-                        <div class="progress-bar">
-                            <div class="progress-fill" id="timeProgress" style="width: 0%"></div>
-                        </div>
-                        <div class="progress-label">
-                            <span id="timePct">0%</span>
-                        </div>
-                    </div>
-                </div>
-                
-                <div class="card timer-card">
-                    <h2><i class="fas fa-hourglass-half"></i> JAK DLOUHO UŽ STREAMUJI</h2>
-                    <div class="timer-display" id="timeRunning">00:00:00</div>
-                    <p class="timer-label" id="startedAtText">Start: 09. 02. 2026 14:00</p>
-                </div>
-                
-                <!-- MONEY & SUBS -->
-                <div class="stats-grid">
-                    <div class="card stat-card money-card">
-                        <h3><i class="fas fa-money-bill-wave"></i> VYBRÁNO</h3>
-                        <div class="stat-number" id="money">0 Kč</div>
-                        <div class="stat-goal" id="moneySmall">0 / 200 000 Kč</div>
-                    </div>
-                    
-                    <div class="card stat-card subs-card">
-                        <h3><i class="fas fa-star"></i> SUBY CELKEM</h3>
-                        <div class="stat-number" id="subsTotal">0</div>
-                        <div class="stat-goal" id="subsBreak">0 / 0 / 0</div>
-                    </div>
-                </div>
-                
-                <!-- GOALS -->
-                <div class="card goals-card">
-                    <h3><i class="fas fa-bullseye"></i> 🎯 Subgoals</h3>
-                    <div class="goal-header" id="subGoalHeader">0 / 1000 subs</div>
-                    <div class="goals-list" id="subGoalList">
-                        <!-- Naplní se JavaScriptem -->
-                    </div>
-                </div>
-                
-                <div class="card goals-card">
-                    <h3><i class="fas fa-trophy"></i> 💰 Donategoal</h3>
-                    <div class="goal-header" id="goalHeader">0 / 200 000 Kč</div>
-                    <div class="goals-list" id="goalList">
-                        <!-- Naplní se JavaScriptem -->
-                    </div>
-                </div>
-                
-            </div> <!-- Konec levého sloupce -->
-            
-            <!-- PRAVÝ SLOUPEC -->
-            <div class="right-column">
-                
-                <!-- TOP DONORS -->
-                <div class="card donors-card">
-                    <h3><i class="fas fa-crown"></i> 🏆 Top 5 donátorů</h3>
-                    <p class="card-subtitle">podle Kč celkem <span class="heart">💜</span></p>
-                    
-                    <table class="donors-table">
-                        <thead>
-                            <tr>
-                                <th>#</th>
-                                <th>JMÉNO</th>
-                                <th>KČ CELKEM</th>
-                                <th>PŘIDANÝ ČAS</th>
-                            </tr>
-                        </thead>
-                        <tbody id="topTableBody">
-                            <tr>
-                                <td colspan="4" class="mutedCell">
-                                    Zatím žádní dárci... buď první! 💜
-                                </td>
-                            </tr>
-                        </tbody>
-                    </table>
-                </div>
-                
-                <!-- ACTIVITY FEED -->
-                <div class="card activity-card">
-                    <h3><i class="fas fa-scroll"></i> 🧾 Poslední akce</h3>
-                    <p class="card-subtitle">posledních 10</p>
-                    
-                    <div class="activity-feed" id="feed">
-                        <div class="activity-item">
-                            <span class="activity-text">Zatím žádné akce...</span>
-                        </div>
-                    </div>
-                </div>
-                
-                <!-- TIME RULES -->
-                <div class="card rules-card">
-                    <h3><i class="fas fa-book"></i> 📜 Pravidla přidávání času</h3>
-                    <p class="card-subtitle">automaticky</p>
-                    
-                    <div class="rules-list">
-                        <div class="rule">
-                            <span class="rule-icon">💗</span>
-                            <span class="rule-text">T1 sub</span>
-                            <span class="rule-time">+10 min</span>
-                        </div>
-                        <div class="rule">
-                            <span class="rule-icon">💗</span>
-                            <span class="rule-text">T2 sub</span>
-                            <span class="rule-time">+20 min</span>
-                        </div>
-                        <div class="rule">
-                            <span class="rule-icon">💗</span>
-                            <span class="rule-text">T3 sub</span>
-                            <span class="rule-time">+30 min</span>
-                        </div>
-                        <div class="rule">
-                            <span class="rule-icon">💗</span>
-                            <span class="rule-text">100 Kč donate</span>
-                            <span class="rule-time">+15 min</span>
-                        </div>
-                        <div class="rule-note">
-                            Pozn.: donate přičítá i za 67 Kč atd. (poměrně).
-                        </div>
-                    </div>
-                </div>
-                
-                <!-- TWITCH EMBED -->
-                <div class="card twitch-card">
-                    <h3><i class="fab fa-twitch"></i> 🔴 Twitch stream a chat</h3>
-                    <p class="card-subtitle">Sleduj a přidej se do chatu! 🎮</p>
-                    
-                    <div class="twitch-embed">
-                        <!-- Twitch stream embed -->
-                        <div id="twitch-embed-stream"></div>
-                        
-                        <!-- Twitch chat embed -->
-                        <div id="twitch-embed-chat"></div>
-                    </div>
-                </div>
-                
-            </div> <!-- Konec pravého sloupce -->
-            
-        </div> <!-- Konec dashboard-grid -->
-        
-        <!-- FOOTER -->
-        <footer class="dashboard-footer">
-            <div class="footer-content">
-                <p>FUFATHON Dashboard • Made with <span class="heart">💜</span> for Fufinka community</p>
-                <p class="footer-links">
-                    <a href="https://twitch.tv/fufinkaa" target="_blank"><i class="fab fa-twitch"></i> Twitch</a>
-                    <a href="https://github.com/FufinKaa" target="_blank"><i class="fab fa-github"></i> GitHub</a>
-                </p>
-            </div>
-        </footer>
-    </div> <!-- Konec container -->
+<body>
+  <div class="bgGlow" aria-hidden="true"></div>
+
+  <main class="container">
     
-    <!-- JavaScript -->
-    <script src="script.js"></script>
-    
-    <!-- Twitch embed script -->
-    <script>
-        // Twitch stream embed
-        new Twitch.Embed("twitch-embed-stream", {
-            width: "100%",
-            height: 300,
-            channel: "fufinkaa",
-            layout: "video",
-            autoplay: false,
-            muted: true
-        });
+    <!-- HLAVNÍ HEADER -->
+    <header class="header">
+      <h1>FUFATHON Dashboard</h1>
+      <div class="subtitle">přehled o všem ✨</div>
+      
+           <div class="header-controls">
+        <div class="status-pill">
+          <span class="live-dot"></span>
+          <span class="status-text">LIVE</span>
+        </div>
         
-        // Twitch chat embed
-        new Twitch.Embed("twitch-embed-chat", {
-            width: "100%",
-            height: 400,
-            channel: "fufinkaa",
-            layout: "chat",
-            theme: "dark"
-        });
-    </script>
+        <!-- SOCIÁLNÍ IKONKY -->
+        <div class="social-icons">
+          <a href="https://www.twitch.tv/fufinkaa" target="_blank" class="social-link" aria-label="Twitch">
+            <span class="social-icon">🔴</span>
+          </a>
+          <a href="https://www.instagram.com/fufinka.a" target="_blank" class="social-link" aria-label="Instagram">
+            <span class="social-icon">📷</span>
+          </a>
+        </div>
+        
+        <button class="theme-btn" id="themeBtn" type="button" aria-label="Přepnout den/noc">
+          <span class="theme-icon" id="themeIcon">🌙</span>
+          <span class="theme-text" id="themeText">Noc</span>
+        </button>
+      </div>
+    </header>
+
+    <!-- TIMER SECTION - DVOJICE -->
+    <section class="card timer-card">
+      <div class="timer-grid">
+        <!-- DO KONCE ZBÝVÁ -->
+        <div class="timer-box">
+          <div class="timer-label">DO KONCE ZBÝVÁ</div>
+          <div class="timer-display" id="timeLeft">00:00:00</div>
+          <div class="timer-info" id="endsAtText">Konec: 28. 01. 2026 16:48</div>
+        </div>
+        
+        <!-- JAK DLOUHO STREAMUJI -->
+        <div class="timer-box">
+          <div class="timer-label">JAK DLOUHO UŽ STREAMUJI</div>
+          <div class="timer-display violet" id="timeRunning">00:00:00</div>
+          <div class="timer-info" id="startedAtText">Start: 27. 01. 2026 12:58</div>
+        </div>
+      </div>
+    </section>
+
+    <!-- STATISTIKY VEDLE SEBE -->
+    <div class="stats-grid">
+      <div class="stat-card">
+        <div class="stat-label">VYBRÁNO</div>
+        <div class="stat-value" id="money">600 Kč</div>
+        <div class="stat-sub" id="moneySmall">600 / 200 000 Kč</div>
+      </div>
+      
+      <div class="stat-card">
+        <div class="stat-label">Suby celkem</div>
+        <div class="stat-value" id="subsTotal">11</div>
+        <div class="stat-sub" id="subsBreak">9 / 1 / 1</div>
+      </div>
+    </div>
+
+    <!-- PROGRESS BAR - POUZE ČAS -->
+    <div class="progress-single">
+      <div class="progress-card">
+        <div class="progress-bar">
+          <div class="progress-fill" id="timeProgress" style="width: 100%"></div>
+        </div>
+        <div class="progress-percent" id="timePct">100%</div>
+      </div>
+    </div>
+
+    <!-- GOALS SECTION - DVOJICE JAKO TABULKA -->
+    <section class="card goals-card">
+      <div class="goals-header">
+        <div class="goals-title">
+          <h2>🎯 Subgoals</h2>
+          <div class="goals-subtitle" id="subGoalHeader">11 / 1000 subs</div>
+        </div>
+        <div class="goals-title">
+          <h2>💰 Donategoal</h2>
+          <div class="goals-subtitle" id="goalHeader">600 / 200 000 Kč</div>
+        </div>
+      </div>
+      
+      <div class="goals-table">
+        <!-- LEVÝ SLOUPEC - SUBGOALS -->
+        <div class="goals-column">
+          <div class="goals-list" id="subGoalList">
+            <!-- Naplní JS -->
+          </div>
+        </div>
+        
+        <!-- PRAVÝ SLOUPEC - DONATEGOALS -->
+        <div class="goals-column">
+          <div class="goals-list" id="goalList">
+            <!-- Naplní JS -->
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- PRAVIDLA PŘIDÁVÁNÍ ČASU -->
+    <section class="card rules-card">
+      <div class="card-header">
+        <h2 class="card-title">📜 Pravidla přidávání času</h2>
+        <div class="card-subtitle">automaticky</div>
+      </div>
+      <div class="rules-list">
+        <div class="rule">
+          <div class="rule-name">💗 T1 sub</div>
+          <div class="rule-value">+10 min</div>
+        </div>
+        <div class="rule">
+          <div class="rule-name">💗 T2 sub</div>
+          <div class="rule-value">+20 min</div>
+        </div>
+        <div class="rule">
+          <div class="rule-name">💗 T3 sub</div>
+          <div class="rule-value">+30 min</div>
+        </div>
+        <div class="rule">
+          <div class="rule-name">💗 100 Kč donate</div>
+          <div class="rule-value">+15 min</div>
+        </div>
+      </div>
+      <div class="note-text">Pozn.: donate přičítá i za 67 Kč atd. (poměrně).</div>
+    </section>
+
+    <!-- TWITCH STREAM A CHAT - SAMOSTATNÝ ŘÁDEK (2 SLOUPCE) -->
+    <section class="card twitch-card">
+      <div class="card-header">
+        <h2 class="card-title">🔴 Twitch stream a chat</h2>
+        <div class="card-subtitle">Sleduj a přidej se do chatu! 🎮</div>
+      </div>
+      <div class="twitch-container">
+        <div class="twitch-stream">
+          <iframe
+            src="https://player.twitch.tv/?channel=fufinkaa&parent=localhost"
+            frameborder="0"
+            allowfullscreen="true"
+            scrolling="no"
+            allow="autoplay; fullscreen"
+            title="Živý stream Fufinka">
+          </iframe>
+        </div>
+        <div class="twitch-chat">
+          <iframe
+            src="https://www.twitch.tv/embed/fufinkaa/chat?parent=localhost&darkpopout"
+            frameborder="0"
+            scrolling="yes"
+            allow="autoplay"
+            title="Chat Fufinka">
+          </iframe>
+        </div>
+      </div>
+    </section>
+
+    <!-- TOP 5 DONÁTORŮ A POSLEDNÍ AKCE - 2 SLOUPCE -->
+    <div class="bottom-grid">
+      <!-- TOP 5 DONÁTORŮ -->
+      <section class="card">
+        <div class="card-header">
+          <h2 class="card-title">🏆 Top 5 donátorů</h2>
+          <div class="card-subtitle">podle Kč celkem 💜</div>
+        </div>
+        <div class="donors-table">
+          <table>
+            <thead>
+              <tr>
+                <th>#</th>
+                <th>Jméno</th>
+                <th>Kč celkem</th>
+                <th>Přidaný čas</th>
+              </tr>
+            </thead>
+            <tbody id="topTableBody">
+              <!-- Naplní JS -->
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <!-- POSLEDNÍ AKCE -->
+      <section class="card">
+        <div class="card-header">
+          <h2 class="card-title">🧾 Poslední akce</h2>
+          <div class="card-subtitle">posledních 10</div>
+        </div>
+        <div class="activity-list" id="feed">
+          <!-- Naplní JS -->
+        </div>
+      </section>
+    </div>
+
+  </main>
+
+  <script src="./script.js"></script>
 </body>
 </html>
