@@ -11,116 +11,141 @@
 <body>
   <div class="bgGlow" aria-hidden="true"></div>
 
-  <header class="wrap header">
-    <div class="brand">
-      <div class="brandIcon" aria-hidden="true">🩷</div>
-      <div>
-        <h1>FUFATHON Dashboard</h1>
-        <div class="subtitle">přehled o všem ✨</div>
+  <main class="container">
+    
+    <!-- HEADER S TIMEREM -->
+    <section class="card hero-card">
+      <div class="hero-header">
+        <div class="hero-title">
+          <h1>FUFATHON Dashboard</h1>
+          <div class="subtitle">přehled o všem ✨</div>
+        </div>
+        <div class="hero-status">
+          <div class="status-pill">
+            <span class="live-dot"></span>
+            <span class="status-text">LIVE</span>
+          </div>
+          <button class="theme-btn" id="themeBtn" type="button" aria-label="Přepnout den/noc">
+            <span class="theme-icon" id="themeIcon">🌙</span>
+            <span class="theme-text" id="themeText">Noc</span>
+          </button>
+        </div>
+      </div>
+
+      <div class="timer-section">
+        <div class="timer-main">
+          <div class="timer-label">Do konce zbývá</div>
+          <div class="timer-display" id="timeLeft">00:00:00</div>
+          <div class="timer-info" id="endsAtText">Konec: 28.01.2026 16:48</div>
+        </div>
+        <div class="timer-stats">
+          <div class="stat-box">
+            <div class="stat-label">Vybráno</div>
+            <div class="stat-value" id="money">600 Kč</div>
+            <div class="stat-sub" id="moneySmall">600 / 200 000 Kč</div>
+          </div>
+          <div class="stat-box">
+            <div class="stat-label">Suby celkem</div>
+            <div class="stat-value" id="subsTotal">11</div>
+            <div class="stat-sub" id="subsBreak">9 / 1 / 1</div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- HRAVÝ PROGRESS -->
+    <div class="progress-row">
+      <div class="progress-item">
+        <div class="progress-label">Čas</div>
+        <div class="progress-bar">
+          <div class="progress-fill" id="timeProgress" style="width: 100%"></div>
+        </div>
+        <div class="progress-pct" id="timePct">100%</div>
+      </div>
+      <div class="progress-item">
+        <div class="progress-label">Donate</div>
+        <div class="progress-bar">
+          <div class="progress-fill pink" id="moneyProgress" style="width: 0.3%"></div>
+        </div>
+        <div class="progress-pct" id="moneyPct">0.3%</div>
+      </div>
+      <div class="progress-item">
+        <div class="progress-label">Suby</div>
+        <div class="progress-bar">
+          <div class="progress-fill cyan" id="subGoalBar" style="width: 1.1%"></div>
+        </div>
+        <div class="progress-pct" id="subPct">1.1%</div>
       </div>
     </div>
 
-    <div class="headRight">
-      <div class="pill live" id="livePill">🔴 LIVE</div>
-      <button class="themeBtn" id="themeBtn" type="button" aria-label="Přepnout den/noc">
-        <span class="themeIcon" id="themeIcon">🌙</span>
-        <span class="themeText" id="themeText">Noc</span>
-      </button>
-    </div>
-  </header>
+    <!-- HLAVNÍ OBSAH V JEDNOM SLOUPCI -->
+    <div class="main-column">
 
-  <main class="wrap grid">
-    <!-- HERO SECTION -->
-    <section class="card hero">
-      <div class="cardHead">
-        <h2>⏱️ Subathon čas</h2>
-        <div class="muted">auto update • live</div>
+      <!-- SUBGOAL A DONATEGOAL VEDLE SEBE -->
+      <div class="double-card">
+        <!-- SUBGOAL -->
+        <section class="card compact">
+          <div class="card-header">
+            <h2 class="card-title">🎯 Subgoal</h2>
+            <div class="card-subtitle" id="subGoalHeader">11 / 1000 subs</div>
+          </div>
+          <div class="goals-list" id="subGoalList">
+            <!-- Naplní JS -->
+          </div>
+        </section>
+
+        <!-- DONATEGOAL -->
+        <section class="card compact">
+          <div class="card-header">
+            <h2 class="card-title">💰 Donategoal</h2>
+            <div class="card-subtitle" id="goalHeader">600 / 200 000 Kč</div>
+          </div>
+          <div class="goals-list" id="goalList">
+            <!-- Naplní JS -->
+          </div>
+        </section>
       </div>
-      <div class="heroGrid">
-        <div class="stat">
-          <div class="label">Do konce zbývá</div>
-          <div class="big" id="timeLeft">00:00:00</div>
-          <div class="muted" id="endsAtText">Konec: 28.01.2026 16:48</div>
+
+      <!-- PRAVIDLA PŘIDÁVÁNÍ ČASU -->
+      <section class="card">
+        <div class="card-header">
+          <h2 class="card-title">📜 Pravidla přidávání času</h2>
+          <div class="card-subtitle">automaticky</div>
         </div>
-        <div class="stat">
-          <div class="label">Jak dlouho už streamuji</div>
-          <div class="big violet" id="timeRunning">33:54:02</div>
-          <div class="muted" id="startedAtText">Start: 27.01.2026 13:58</div>
+        <div class="rules-grid">
+          <div class="rule-item">
+            <div class="rule-icon">💗</div>
+            <div class="rule-text">T1 sub</div>
+            <div class="rule-value">+10 min</div>
+          </div>
+          <div class="rule-item">
+            <div class="rule-icon">💗</div>
+            <div class="rule-text">T2 sub</div>
+            <div class="rule-value">+20 min</div>
+          </div>
+          <div class="rule-item">
+            <div class="rule-icon">💗</div>
+            <div class="rule-text">T3 sub</div>
+            <div class="rule-value">+30 min</div>
+          </div>
+          <div class="rule-item">
+            <div class="rule-icon">💗</div>
+            <div class="rule-text">100 Kč donate</div>
+            <div class="rule-value">+15 min</div>
+          </div>
         </div>
-      </div>
-      <div class="barRow">
-        <div class="barLabel">Progress času</div>
-        <div class="bar">
-          <div class="barFill" id="timeProgress" style="width: 100%"></div>
-        </div>
-        <div class="barPct" id="timePct">100%</div>
-      </div>
-    </section>
+        <div class="note-text">Pozn.: donate přičítá i za 67 Kč atd. (poměrně).</div>
+      </section>
 
-    <!-- LEFT COLUMN - STATS -->
-    <section class="card leftCol">
-      <div class="cardHead">
-        <h2>💰 Vybráno</h2>
-        <div class="muted">celkem z donates</div>
-      </div>
-      <div class="money" id="money">600 Kč</div>
-      <div class="muted" id="moneySmall">600 / 200 000 Kč</div>
-      <div class="bar">
-        <div class="barFill" id="moneyProgress" style="width: 0.3%"></div>
-      </div>
-
-      <div class="miniRow">
-        <div class="mini">
-          <div class="miniLabel">Suby celkem</div>
-          <div class="miniVal" id="subsTotal">11</div>
-        </div>
-        <div class="mini">
-          <div class="miniLabel">T1 / T2 / T3</div>
-          <div class="miniVal" id="subsBreak">9 / 1 / 1</div>
-        </div>
-      </div>
-
-      <div class="spacer"></div>
-
-      <div class="cardHead">
-        <h2>📜 Pravidla přidávání času</h2>
-        <div class="muted">automaticky</div>
-      </div>
-      <ul class="rules">
-        <li><span class="ruleIcon">💗</span> T1 sub = <strong>+10 min</strong></li>
-        <li><span class="ruleIcon">💗</span> T2 sub = <strong>+20 min</strong></li>
-        <li><span class="ruleIcon">💗</span> T3 sub = <strong>+30 min</strong></li>
-        <li><span class="ruleIcon">💗</span> 100 Kč donate = <strong>+15 min</strong> (poměrově)</li>
-      </ul>
-      <div class="muted tiny">Pozn.: donate přičítá i za 67 Kč atd. (poměrně).</div>
-    </section>
-
-    <!-- MIDDLE COLUMN - GOALS -->
-    <section class="card midCol">
-      <div class="cardHead">
-        <h2>🎯 Donategoal</h2>
-        <div class="muted" id="goalHeader">600 / 200 000 Kč</div>
-      </div>
-      <div class="bar">
-        <div class="barFill" id="goalBar" style="width: 0.3%"></div>
-      </div>
-      <div class="goalList" id="goalList">
-        <!-- Naplní JavaScript -->
-      </div>
-      <div class="muted tiny">✅ Milníky se automaticky odškrtávají podle vybraných Kč.</div>
-    </section>
-
-    <!-- RIGHT COLUMN - TWITCH & SUBGOAL -->
-    <section class="card rightCol">
       <!-- TWITCH STREAM -->
-      <div class="cardHead">
-        <h2>🔴 Živě na Twitchi</h2>
-        <div class="muted">Sleduj a přidej se do chatu! 🎮</div>
-      </div>
-      <div class="live-container">
-        <div class="twitch-stream">
+      <section class="card">
+        <div class="card-header">
+          <h2 class="card-title">🔴 Živě na Twitchi</h2>
+          <div class="card-subtitle">Sleduj a přidej se do chatu! 🎮</div>
+        </div>
+        <div class="twitch-embed">
           <iframe
-            src="https://player.twitch.tv/?channel=fufinkaa&parent=fufinkaa.github.io"
+            src="https://player.twitch.tv/?channel=fufinkaa&parent=localhost"
             frameborder="0"
             allowfullscreen="true"
             scrolling="no"
@@ -128,65 +153,46 @@
             title="Živý stream Fufinka">
           </iframe>
         </div>
-        <div class="twitch-chat">
-          <iframe
-            src="https://www.twitch.tv/embed/fufinkaa/chat?parent=fufinkaa.github.io&darkpopout"
-            frameborder="0"
-            scrolling="yes"
-            allow="autoplay"
-            title="Chat Fufinka">
-          </iframe>
-        </div>
+      </section>
+
+      <!-- POSLEDNÍ AKCE A TOP DONOŘI VEDLE SEBE -->
+      <div class="double-card">
+        <!-- POSLEDNÍ AKCE -->
+        <section class="card compact">
+          <div class="card-header">
+            <h2 class="card-title">🧾 Poslední akce</h2>
+            <div class="card-subtitle">posledních 10</div>
+          </div>
+          <div class="activity-feed" id="feed">
+            <!-- Naplní JS -->
+          </div>
+        </section>
+
+        <!-- TOP DONOŘI -->
+        <section class="card compact">
+          <div class="card-header">
+            <h2 class="card-title">🏆 Top 5 podporovatelů</h2>
+            <div class="card-subtitle">podle Kč celkem 💜</div>
+          </div>
+          <div class="donors-table">
+            <table>
+              <thead>
+                <tr>
+                  <th>#</th>
+                  <th>Jméno</th>
+                  <th>Kč</th>
+                </tr>
+              </thead>
+              <tbody id="topTableBody">
+                <!-- Naplní JS -->
+              </tbody>
+            </table>
+          </div>
+        </section>
       </div>
 
-      <!-- SUBGOAL -->
-      <div class="cardHead" style="margin-top: 20px;">
-        <h2>🎯 Subgoal</h2>
-        <div class="muted" id="subGoalHeader">11 / 1000 subs</div>
-      </div>
-      <div class="bar">
-        <div class="barFill" id="subGoalBar" style="width: 1.1%"></div>
-      </div>
-      <div class="subGoalList" id="subGoalList">
-        <!-- Naplní JavaScript -->
-      </div>
-      <div class="muted tiny">✅ Subgoaly se automaticky odškrtávají podle počtu subů.</div>
-    </section>
+    </div> <!-- konec main-column -->
 
-    <!-- WIDE CARDS -->
-    <!-- TOP 5 DONORS -->
-    <section class="card wide">
-      <div class="cardHead">
-        <h2>🏆 Top 5 podporovatelů</h2>
-        <div class="muted">podle Kč celkem 💜</div>
-      </div>
-      <div class="tableWrap">
-        <table class="topTable">
-          <thead>
-            <tr>
-              <th>#</th>
-              <th>Jméno</th>
-              <th>Kč celkem</th>
-              <th>Přidaný čas</th>
-            </tr>
-          </thead>
-          <tbody id="topTableBody">
-            <!-- Naplní JavaScript -->
-          </tbody>
-        </table>
-      </div>
-    </section>
-
-    <!-- RECENT ACTIVITY -->
-    <section class="card wide">
-      <div class="cardHead">
-        <h2>🧾 Poslední akce</h2>
-        <div class="muted">posledních 10</div>
-      </div>
-      <div class="feed" id="feed">
-        <!-- Naplní JavaScript -->
-      </div>
-    </section>
   </main>
 
   <script src="./script.js"></script>
