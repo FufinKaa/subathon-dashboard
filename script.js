@@ -1,5 +1,5 @@
 // ============================
-// FUFATHON Dashboard - Čistý design
+// FUFATHON Dashboard - Kompletní verze
 // ============================
 
 const API_STATE = "https://fufathon-api.pajujka191.workers.dev/api/state";
@@ -9,7 +9,7 @@ const SE_JWT_TOKEN = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJjaXRhZGVsI
 
 const SUB_MINUTES = { 1: 10, 2: 20, 3: 30 };
 
-// DONATEGOAL (jen z obrázku)
+// DONATEGOAL (podle obrázku)
 const GOALS = [
   { amount: 120000, title: "ASMR stream" },
   { amount: 125000, title: "Bolt Tower" },
@@ -52,13 +52,12 @@ function formatHMS(totalSec) {
 function formatDateTime(ts) {
   if (!ts) return "—";
   const d = new Date(ts);
-  return d.toLocaleString("cs-CZ", {
-    day: "2-digit",
-    month: "2-digit",
-    year: "numeric",
-    hour: "2-digit",
-    minute: "2-digit"
-  });
+  const day = String(d.getDate()).padStart(2, '0');
+  const month = String(d.getMonth() + 1).padStart(2, '0');
+  const year = d.getFullYear();
+  const hours = String(d.getHours()).padStart(2, '0');
+  const minutes = String(d.getMinutes()).padStart(2, '0');
+  return `${day}. ${month}. ${year} ${hours}:${minutes}`;
 }
 
 // ===== THEME TOGGLE =====
@@ -217,19 +216,20 @@ function connectStreamElements() {
 function renderDashboard(data) {
   if (!data) return;
   
-  // Čas
+  // Čas DO KONCE
   const remaining = Number(data.timeRemainingSec) || 0;
   $("#timeLeft").textContent = formatHMS(remaining);
   
+  // Čas JAK DLOUHO STREAMUJI
+  if (data.startedAt) {
+    const streamedSec = Math.floor((Date.now() - data.startedAt) / 1000);
+    $("#timeRunning").textContent = formatHMS(streamedSec);
+    $("#startedAtText").textContent = `Start: ${formatDateTime(data.startedAt)}`;
+  }
+  
+  // Formátování data konce
   if (data.endsAt) {
-    const date = new Date(data.endsAt);
-    const day = String(date.getDate()).padStart(2, '0');
-    const month = String(date.getMonth() + 1).padStart(2, '0');
-    const year = date.getFullYear();
-    const hours = String(date.getHours()).padStart(2, '0');
-    const minutes = String(date.getMinutes()).padStart(2, '0');
-    
-    $("#endsAtText").textContent = `Konec: ${day}. ${month}. ${year} ${hours}:${minutes}`;
+    $("#endsAtText").textContent = `Konec: ${formatDateTime(data.endsAt)}`;
   }
   
   // Progress času
