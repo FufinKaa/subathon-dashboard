@@ -1,5 +1,5 @@
 // ============================
-// FUFATHON Dashboard - FINÁLNÍ VERZE
+// FUFATHON Dashboard - FINÁLNÍ VERZE s TIMEREM
 // ============================
 
 const API_STATE = "https://fufathon-api.pajujka191.workers.dev/api/state";
@@ -7,7 +7,17 @@ const GOAL_TOTAL = 200000;
 const SUB_GOAL_TOTAL = 1000;
 const SE_JWT_TOKEN = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJjaXRhZGVsIiwiZXhwIjoxNzg1MTg5ODgyLCJqdGkiOiI2MzMzNDRlMS03ODkxLTQ4NjAtOTIzNC0zNmY3Y2I0YWRhMTciLCJjaGFubmVsIjoiNWJhN2M4NTY2NzE2NmQ5MTUwYjQwNmZlIiwicm9sZSI6Im93bmVyIiwiYXV0aFRva2VuIjoiYU9PQ0E1UmR3V2M2OTZ0WVJzUU1pQjRjNzZ2ZUdBUFdxN0hsYXJLczhxSHZIb2xJIiwidXNlciI6IjViYTdjODU2NjcxNjZkM2U5OGI0MDZmZCIsInVzZXJfaWQiOiIyOGE3MTNkZS00ZDAzLTQxYzQtOTliMi1hMWQ0NDY0NmY0NDkiLCJ1c2VyX3JvbGUiOiJjcmVhdG9yIiwicHJvdmlkZXIiOiJ0d2l0Y2giLCJwcm92aWRlcl9pZCI6IjI1MzExNjI5MSIsImNoYW5uZWxfaWQiOiI1NGQwNzRjYi1hODQ0LTRmMDctOWZhNC02NWVlNDRmNjJiZGUiLCJjcmVhdG9yX2lkIjoiZDU5MGJmYzMtNDgwYS00MTc0LWEyOWUtZWRlOTI1MjI3N2YyIn0.fXn27iJsOAB7u02mFzBLEEvAY1bYBM47LhMWbhJv_yg';
 
+// ===== SUBATHON TIMER SETTINGS =====
+const SUBATHON_START = new Date("2026-02-09T14:00:00"); // 9. 2. 2026 14:00
+const INITIAL_DURATION_HOURS = 24; // 24 hodin
+const INITIAL_DURATION_MS = INITIAL_DURATION_HOURS * 60 * 60 * 1000;
+
+let subathonEndTime = new Date(SUBATHON_START.getTime() + INITIAL_DURATION_MS);
+let isStreamActive = true;
+
+// ===== TIME ADDING RULES =====
 const SUB_MINUTES = { 1: 10, 2: 20, 3: 30 };
+const DONATE_RATE = 15; // minut za 100 Kč
 
 // DONATEGOAL - VŠECHNY GOALS Z SCREENSHOTU
 const GOALS = [
@@ -87,6 +97,85 @@ function formatDateTime(ts) {
   const hours = String(d.getHours()).padStart(2, '0');
   const minutes = String(d.getMinutes()).padStart(2, '0');
   return `${day}. ${month}. ${year} ${hours}:${minutes}`;
+}
+
+// ===== TIME MANAGEMENT FUNCTIONS =====
+function addMinutesToSubathon(minutes) {
+  const msToAdd = minutes * 60 * 1000;
+  subathonEndTime = new Date(subathonEndTime.getTime() + msToAdd);
+  
+  // Vizuální potvrzení
+  showTimeAddedNotification(minutes);
+  
+  console.log(`➕ Přidáno ${minutes} minut. Nový konec: ${subathonEndTime.toLocaleString()}`);
+  updateTimers();
+  
+  // Synchronizuj s API (volitelné)
+  syncEndTimeWithAPI();
+}
+
+function addTimeForDonate(amountCzk) {
+  // 100 Kč = 15 minut, poměrně
+  const minutes = Math.floor((amountCzk / 100) * DONATE_RATE);
+  if (minutes > 0) {
+    addMinutesToSubathon(minutes);
+  }
+}
+
+function addTimeForSub(tier, count = 1) {
+  const minutes = (SUB_MINUTES[tier] || 10) * count;
+  addMinutesToSubathon(minutes);
+}
+
+function showTimeAddedNotification(minutes) {
+  // Vytvoříme krátkou notifikaci
+  const notification = document.createElement('div');
+  notification.className = 'time-added-notification';
+  notification.innerHTML = `
+    <div class="notification-content">
+      🎉 <strong>+${minutes} minut</strong> přidáno do subathonu!
+    </div>
+  `;
+  
+  document.body.appendChild(notification);
+  
+  // Odstraníme po 3 sekundách
+  setTimeout(() => {
+    notification.classList.add('fade-out');
+    setTimeout(() => notification.remove(), 500);
+  }, 3000);
+}
+
+async function syncEndTimeWithAPI() {
+  try {
+    // Zde můžeš přidat volání na API pro uložení nového endTime
+    // await fetch(API_STATE, { method: 'POST', body: JSON.stringify({ endsAt: subathonEndTime }) });
+  } catch (error) {
+    console.log('⚠️ Nelze synchronizovat čas s API:', error);
+  }
+}
+
+function updateTimers() {
+  const now = new Date();
+  
+  // Čas DO KONCE
+  const remainingMs = Math.max(0, subathonEndTime - now);
+  const remainingSec = Math.floor(remainingMs / 1000);
+  $("#timeLeft").textContent = formatHMS(remainingSec);
+  $("#endsAtText").textContent = `Konec: ${formatDateTime(subathonEndTime)}`;
+  
+  // Čas JAK DLOUHO STREAMUJI
+  const streamedMs = Math.max(0, now - SUBATHON_START);
+  const streamedSec = Math.floor(streamedMs / 1000);
+  $("#timeRunning").textContent = formatHMS(streamedSec);
+  $("#startedAtText").textContent = `Start: ${formatDateTime(SUBATHON_START)}`;
+  
+  // Progress bar času
+  const totalDurationMs = subathonEndTime - SUBATHON_START;
+  const elapsedMs = now - SUBATHON_START;
+  const percent = Math.min(100, Math.max(0, (elapsedMs / totalDurationMs) * 100));
+  $("#timeProgress").style.width = `${percent}%`;
+  $("#timePct").textContent = `${Math.round(percent)}%`;
 }
 
 // ===== THEME TOGGLE =====
@@ -202,7 +291,7 @@ function renderActivityFeed(events) {
     if (event.kind === "donation") {
       icon = "💰";
       text = `Donate ${formatKc(event.amountKc)} Kč od ${event.sender || 'Anonym'}`;
-      amount = `+${Math.round((event.amountKc / 100) * 15)} min`;
+      amount = `+${Math.floor((event.amountKc / 100) * DONATE_RATE)} min`;
     } else if (event.kind === "sub") {
       icon = "⭐";
       text = `${event.sender || 'Anonym'} si pořídil sub (T${event.tier})`;
@@ -258,7 +347,35 @@ function connectStreamElements() {
   });
   
   socket.on('event', (data) => {
-    console.log('🎬 StreamElements event:', data.listener);
+    console.log('🎬 StreamElements event:', data.listener, data);
+    
+    // AUTOMATICKÉ PŘIDÁVÁNÍ ČASU
+    if (data.listener === 'subscriber-latest') {
+      // Nový sub
+      const tier = data.event.tier || 1;
+      addTimeForSub(tier);
+      
+    } else if (data.listener === 'subscriber-gift-latest') {
+      // Gifted sub
+      const tier = data.event.tier || 1;
+      const count = data.event.amount || 1;
+      addTimeForSub(tier, count);
+      
+    } else if (data.listener === 'tip-latest') {
+      // Donate
+      const amount = data.event.amount || 0;
+      const currency = data.event.currency || 'CZK';
+      
+      let amountCzk = amount;
+      // Jednoduchá konverze (pro reálné použití bys potřeboval API pro kurzy)
+      if (currency === 'USD') amountCzk = amount * 23;
+      if (currency === 'EUR') amountCzk = amount * 25;
+      if (currency === 'GBP') amountCzk = amount * 29;
+      
+      addTimeForDonate(amountCzk);
+    }
+    
+    // Načti nová data z API
     fetchDashboardData();
   });
   
@@ -271,37 +388,12 @@ function connectStreamElements() {
 function renderDashboard(data) {
   if (!data) return;
   
-  // Čas DO KONCE
-  const remaining = Number(data.timeRemainingSec) || 0;
-  $("#timeLeft").textContent = formatHMS(remaining);
-  
-  // Čas JAK DLOUHO STREAMUJI
-  if (data.startedAt) {
-    const streamedSec = Math.floor((Date.now() - data.startedAt) / 1000);
-    $("#timeRunning").textContent = formatHMS(streamedSec);
-    $("#startedAtText").textContent = `Start: ${formatDateTime(data.startedAt)}`;
-  }
-  
-  // Formátování data konce
-  if (data.endsAt) {
-    $("#endsAtText").textContent = `Konec: ${formatDateTime(data.endsAt)}`;
-  }
-  
-  // Progress času POUZE
-  if (data.startedAt && data.endsAt && data.endsAt > data.startedAt) {
-    const total = data.endsAt - data.startedAt;
-    const elapsed = Date.now() - data.startedAt;
-    const percent = Math.min(100, (elapsed / total) * 100);
-    $("#timeProgress").style.width = `${percent}%`;
-    $("#timePct").textContent = `${Math.round(percent)}%`;
-  }
-  
-  // Peníze
+  // 1. PENÍZE
   const money = Number(data.money) || 0;
   $("#money").textContent = `${formatKc(money)} Kč`;
   $("#moneySmall").textContent = `${formatKc(money)} / ${formatKc(GOAL_TOTAL)} Kč`;
   
-  // Suby
+  // 2. SUBY
   const t1 = Number(data.t1) || 0;
   const t2 = Number(data.t2) || 0;
   const t3 = Number(data.t3) || 0;
@@ -310,7 +402,15 @@ function renderDashboard(data) {
   $("#subsTotal").textContent = subsTotal;
   $("#subsBreak").textContent = `${t1} / ${t2} / ${t3}`;
   
-  // Zbytek
+  // 3. TIMER - pokud API má svůj endTime, použij ho
+  if (data.endsAt) {
+    const apiEndTime = new Date(data.endsAt);
+    if (apiEndTime > subathonEndTime) {
+      subathonEndTime = apiEndTime;
+    }
+  }
+  
+  // 4. ZBYTEK
   renderGoals(money);
   renderSubGoals(subsTotal);
   renderTopDonors(data.topDonors);
@@ -332,11 +432,61 @@ async function fetchDashboardData() {
 // ===== INITIALIZATION =====
 function initDashboard() {
   initTheme();
+  
+  // Přidej CSS pro notifikace
+  const style = document.createElement('style');
+  style.textContent = `
+    .time-added-notification {
+      position: fixed;
+      top: 20px;
+      right: 20px;
+      background: linear-gradient(135deg, #7b2ff7, #f107a3);
+      color: white;
+      padding: 15px 20px;
+      border-radius: 12px;
+      z-index: 9999;
+      box-shadow: 0 5px 20px rgba(123, 47, 247, 0.5);
+      animation: slideIn 0.5s ease-out;
+      font-family: inherit;
+      max-width: 300px;
+    }
+    
+    .notification-content {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-size: 16px;
+    }
+    
+    @keyframes slideIn {
+      from { transform: translateX(100%); opacity: 0; }
+      to { transform: translateX(0); opacity: 1; }
+    }
+    
+    .fade-out {
+      animation: fadeOut 0.5s ease-out forwards;
+    }
+    
+    @keyframes fadeOut {
+      to { opacity: 0; transform: translateY(-20px); }
+    }
+  `;
+  document.head.appendChild(style);
+  
+  // Inicializuj timery
+  updateTimers();
+  
+  // Načti data z API
   fetchDashboardData();
+  
+  // Připoj StreamElements
   connectStreamElements();
   
   // Auto-refresh každé 2 sekundy
   setInterval(fetchDashboardData, 2000);
+  
+  // Aktualizuj timery každou sekundu
+  setInterval(updateTimers, 1000);
 }
 
 // ===== START =====
