@@ -999,6 +999,33 @@ function resetTestData() {
   }
 }
 
+// ===== LOAD FROM LOCALSTORAGE ONLY =====
+function loadFromLocalStorageOnly() {
+  try {
+    console.log('📊 Načítám data POUZE z localStorage...');
+    
+    // Načti všechna data z localStorage
+    const donors = JSON.parse(localStorage.getItem('fufathon_donors') || '[]');
+    const events = JSON.parse(localStorage.getItem('fufathon_events') || '[]');
+    const subs = JSON.parse(localStorage.getItem('fufathon_subs') || '{"t1":0,"t2":0,"t3":0,"total":0}');
+    
+    // Aktualizuj UI
+    updateTopDonorsTable(donors);
+    updateActivityFeed(events);
+    updateSubsDisplay(subs);
+    updateTotalMoney();
+    
+    console.log('✅ Data načtena z localStorage:', {
+      subs: subs.total,
+      donors: donors.length,
+      events: events.length
+    });
+    
+  } catch (error) {
+    console.error('❌ Chyba při načítání z localStorage:', error);
+  }
+}
+
 // ===== INITIALIZATION =====
 function initDashboard() {
   initTheme();
@@ -1046,8 +1073,11 @@ function initDashboard() {
   // Inicializuj timery
   updateTimers();
   
-  // Načti existující data
-  loadExistingData();
+  // 🚨 DŮLEŽITÉ: ZCELA VYPNUTO NAČÍTÁNÍ Z API
+  // NENÍ TU volání loadExistingData() ani fetchDashboardData()
+  
+  // Místo toho načti POUZE z localStorage
+  loadFromLocalStorageOnly();
   
   // Připoj StreamElements
   connectStreamElements();
@@ -1055,13 +1085,13 @@ function initDashboard() {
   // ✅ PŘIDEJ TESTOVACÍ PANEL
   addManualTestButtons();
   
-  // ⚠️ DŮLEŽITÉ: VYPNUTO auto-refresh (aby se data neztrácela)
+  // ⚠️ DŮLEŽITÉ: VYPNUTO auto-refresh
   // setInterval(fetchDashboardData, 5000); // ZAKOMENTOVÁNO!
   
   // Aktualizuj timery každou sekundu
   setInterval(updateTimers, 1000);
   
-  console.log('🚀 Dashboard inicializován! (auto-refresh vypnuto)');
+  console.log('🚀 Dashboard inicializován! (pouze localStorage, žádné API)');
 }
 
 // ===== START =====
