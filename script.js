@@ -684,8 +684,8 @@ async function loadDataFromAPI() {
     console.log('✅ Data načtena z API:', remoteState);
   } catch (error) {
     console.error('❌ Nelze načíst z API, použiju localStorage', error);
-    // Fallback na starou lokální funkci
-    loadFromLocalStorageOnly();
+    // Místo: loadFromLocalStorageOnly();
+loadDataFromAPI();
   }
 }
 // ===== INITIALIZATION =====
