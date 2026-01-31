@@ -702,8 +702,11 @@ async function loadFromAPI() {
 }
 
 // ===== INITIALIZATION =====
-function initDashboard() {
-  initTheme();
+// Místo tohoto:
+// loadFromLocalStorageOnly();
+
+// Použij tohle:
+loadFromAPI();
   
   const style = document.createElement('style');
   style.textContent = `
