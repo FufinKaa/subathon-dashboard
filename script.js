@@ -647,37 +647,57 @@ function updateTotalMoney() {
 }
 
 // ===== LOAD FROM LOCALSTORAGE ONLY =====
-function loadFromLocalStorageOnly() {
+async function loadFromAPI() {
+  console.log('📊 Načítám data z Cloudflare Worker API...');
   try {
-    console.log('📊 Načítám data POUZE z localStorage...');
-    
-    const donors = JSON.parse(localStorage.getItem('fufathon_donors') || '[]');
-    const events = JSON.parse(localStorage.getItem('fufathon_events') || '[]');
-    const subs = JSON.parse(localStorage.getItem('fufathon_subs') || '{"t1":0,"t2":0,"t3":0,"total":0}');
-    
-    // NAČTI ULOŽENÝ ČAS
-    const savedEndTime = localStorage.getItem('subathonEndTime');
-    if (savedEndTime) {
-      subathonEndTime = new Date(Number(savedEndTime));
-      console.log('🕒 Čas obnoven z localStorage:', subathonEndTime.toLocaleString());
+    // 1. Získej aktuální stav z tvého centrálního Workeru
+    const response = await fetch(API_STATE);
+    if (!response.ok) throw new Error(`API error: ${response.status}`);
+    const remoteState = await response.json();
+
+    console.log('✅ Data z API:', remoteState);
+
+    // 2. AKTUALIZUJ UI podle dat z Workeru
+    // Peníze
+    $("#money").textContent = `${formatKc(remoteState.money)} Kč`;
+    $("#moneySmall").textContent = `${formatKc(remoteState.money)} / ${formatKc(GOAL_TOTAL)} Kč`;
+
+    // Suby
+    $("#subsTotal").textContent = remoteState.subsTotal;
+    $("#subsBreak").textContent = `${remoteState.t1} / ${remoteState.t2} / ${remoteState.t3}`;
+
+    // Cíle
+    renderGoals(remoteState.money);
+    renderSubGoals(remoteState.subsTotal);
+
+    // Top donoři
+    renderTopDonors(remoteState.topDonors);
+
+    // Aktivity
+    renderActivityFeed(remoteState.lastEvents);
+
+    // 3. NASTAV KONEC SUBATHONU z Workeru (VELMI DŮLEŽITÉ!)
+    // Worker má svůj vlastní čas `endsAt`. Ten musíš použít.
+    if (remoteState.endsAt) {
+      subathonEndTime = new Date(remoteState.endsAt);
+      // Ulož si ho i lokálně, aby timer fungoval
+      localStorage.setItem('subathonEndTime', subathonEndTime.getTime());
     }
-    
-    updateTopDonorsTable(donors);
-    updateActivityFeed(events);
-    updateSubsDisplay(subs);
-    updateTotalMoney();
-    
-    console.log('✅ Data načtena z localStorage:', {
-      t1: subs.t1,
-      t2: subs.t2,
-      t3: subs.t3,
-      total: subs.total,
-      donors: donors.length,
-      events: events.length
-    });
-    
+
+    // 4. (Volitelné) Můžeš si data uložit i do localStorage jako zálohu
+    const localBackup = {
+      donors: remoteState.topDonors,
+      events: remoteState.lastEvents,
+      subs: { t1: remoteState.t1, t2: remoteState.t2, t3: remoteState.t3, total: remoteState.subsTotal }
+    };
+    localStorage.setItem('fufathon_donors', JSON.stringify(localBackup.donors));
+    localStorage.setItem('fufathon_events', JSON.stringify(localBackup.events));
+    localStorage.setItem('fufathon_subs', JSON.stringify(localBackup.subs));
+
   } catch (error) {
-    console.error('❌ Chyba při načítání z localStorage:', error);
+    console.error('❌ Nelze načíst z API, použiju localStorage', error);
+    // Fallback na stará data, pokud API neodpoví
+    loadFromLocalStorageOnly();
   }
 }
 
