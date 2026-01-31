@@ -2,7 +2,8 @@
 // FUFATHON Dashboard - FINÁLNÍ OPRAVENÁ VERZE
 // ============================
 
-const API_STATE = "https://fufathon-api.pajujka191.workers.dev/api/state";
+// NA ZAČÁTKU SOUBORU
+const API_STATE = "https://fufathon-api.pajujka191.workers.dev/api/state"; // Toto už máš, JE SPRÁVNĚ
 const GOAL_TOTAL = 200000;
 const SUB_GOAL_TOTAL = 1000;
 const SE_JWT_TOKEN = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJjaXRhZGVsIiwiZXhwIjoxNzg1MTg5ODgyLCJqdGkiOiI2MzMzNDRlMS03ODkxLTQ4NjAtOTIzNC0zNmY3Y2I0YWRhMTciLCJjaGFubmVsIjoiNWJhN2M4NTY2NzE2NmQ5MTUwYjQwNmZlIiwicm9sZSI6Im93bmVyIiwiYXV0aFRva2VuIjoiYU9PQ0E1UmR3V2M2OTZ0WVJzUU1pQjRjNzZ2ZUdBUFdxN0hsYXJLczhxSHZIb2xJIiwidXNlciI6IjViYTdjODU2NjcxNjZkM2U5OGI0MDZmZCIsInVzZXJfaWQiOiIyOGE3MTNkZS00ZDAzLTQxYzQtOTliMi1hMWQ0NDY0NmY0NDkiLCJ1c2VyX3JvbGUiOiJjcmVhdG9yIiwicHJvdmlkZXIiOiJ0d2l0Y2giLCJwcm92aWRlcl9pZCI6IjI1MzExNjI5MSIsImNoYW5uZWxfaWQiOiI1NGQwNzRjYi1hODQ0LTRmMDctOWZhNC02NWVlNDRmNjJiZGUiLCJjcmVhdG9yX2lkIjoiZDU5MGJmYzMtNDgwYS00MTc0LWEyOWUtZWRlOTI1MjI3N2YyIn0.fXn27iJsOAB7u02mFzBLEEvAY1bYBM47LhMWbhJv_yg';
@@ -728,7 +729,7 @@ function initDashboard() {
   // ✅ DŮLEŽITÉ: Načti data POUZE z localStorage
   loadFromLocalStorageOnly();
   
-  connectStreamElements();
+  // connectStreamElements(); //
   
   // ⚠️ VYPNUTO auto-refresh z API
   setInterval(updateTimers, 1000);
