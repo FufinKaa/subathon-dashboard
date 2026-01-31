@@ -762,3 +762,6 @@ loadFromAPI();
 
 // ===== START =====
 document.addEventListener("DOMContentLoaded", initDashboard);
+
+// Periodicky obnovuj data z API (každých 5 sekund)
+setInterval(loadFromAPI, 5000);
