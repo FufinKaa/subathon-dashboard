@@ -1,5 +1,5 @@
 // ============================
-// FUFATHON Dashboard - CENTRALIZOVANÁ VERZE
+// FUFATHON Dashboard - OPRAVENÁ VERZE
 // ============================
 
 // KONFIGURACE
@@ -7,13 +7,12 @@ const API_STATE = "https://fufathon-api.pajujka191.workers.dev/api/state";
 const GOAL_TOTAL = 200000;
 const SUB_GOAL_TOTAL = 1000;
 
-// ===== TIMER =====
+// PEVNÝ ČAS SUBATHONU
 const SUBATHON_START = new Date("2026-02-09T14:00:00"); // 9. 2. 2026 14:00
 const INITIAL_DURATION_HOURS = 24; // 24 hodin
 let subathonEndTime = new Date(SUBATHON_START.getTime() + (INITIAL_DURATION_HOURS * 60 * 60 * 1000));
-let isStreamActive = true;
 
-// DONATEGOAL - VŠECHNY GOALS Z SCREENSHOTU
+// GOALS - ZACHOVÁM TVŮJ PŮVODNÍ SEZNAM
 const GOALS = [
   { amount: 5000, icon: "🎬", title: "Movie night" },
   { amount: 10000, icon: "😏", title: "Q&A bez cenzury" },
@@ -48,7 +47,6 @@ const GOALS = [
   { amount: 200000, icon: "🏙️", title: "Víkend v Praze" }
 ];
 
-// SUBGOAL - VŠECHNY GOALS Z SCREENSHOTU
 const SUB_GOALS = [
   { amount: 100, icon: "🍳", title: "Snídaně podle chatu" },
   { amount: 200, icon: "💄", title: "Make-up challenge" },
@@ -92,36 +90,24 @@ function formatDateTime(ts) {
 function updateTimers() {
   const now = new Date();
   
-  // Aktualizuj jen čas DO KONCE z lokální proměnné
+  // 1. ČAS DO KONCE
   const remainingMs = Math.max(0, subathonEndTime - now);
   const remainingSec = Math.floor(remainingMs / 1000);
   $("#timeLeft").textContent = formatHMS(remainingSec);
   $("#endsAtText").textContent = `Konec: ${formatDateTime(subathonEndTime)}`;
   
-  // Progress bar času
-  const totalDurationMs = subathonEndTime.getTime() - new Date("2026-02-09T14:00:00").getTime();
-  const elapsedMs = now.getTime() - new Date("2026-02-09T14:00:00").getTime();
+  // 2. JAK DLOUHO STREAMUJI
+  const streamedMs = Math.max(0, now - SUBATHON_START);
+  const streamedSec = Math.floor(streamedMs / 1000);
+  $("#timeRunning").textContent = formatHMS(streamedSec);
+  $("#startedAtText").textContent = `Start: ${formatDateTime(SUBATHON_START)}`;
+  
+  // 3. PROGRESS BAR
+  const totalDurationMs = subathonEndTime - SUBATHON_START;
+  const elapsedMs = now - SUBATHON_START;
   const percent = Math.min(100, Math.max(0, (elapsedMs / totalDurationMs) * 100));
   $("#timeProgress").style.width = `${percent}%`;
   $("#timePct").textContent = `${Math.round(percent)}%`;
-}
-
-// ===== HLÁŠKY O PŘIDÁNÍ ČASU =====
-function showTimeAddedNotification(minutes) {
-  const notification = document.createElement('div');
-  notification.className = 'time-added-notification';
-  notification.innerHTML = `
-    <div class="notification-content">
-      🎉 <strong>+${minutes} minut</strong> přidáno do subathonu!
-    </div>
-  `;
-  
-  document.body.appendChild(notification);
-  
-  setTimeout(() => {
-    notification.classList.add('fade-out');
-    setTimeout(() => notification.remove(), 500);
-  }, 3000);
 }
 
 // ===== NAČTENÍ DAT Z WORKERU =====
@@ -138,41 +124,52 @@ async function loadDataFromWorker() {
     const data = await response.json();
     console.log('✅ Data z Workeru:', data);
     
-    // 1. AKTUALIZUJ ČAS SUBATHONU
-    if (data.endsAt) {
+    // DŮLEŽITÉ: Pokud Worker vrátí platný endsAt, použij ho
+    if (data.endsAt && data.endsAt > Date.now()) {
       subathonEndTime = new Date(data.endsAt);
-      localStorage.setItem('subathonEndTime', data.endsAt);
+      console.log('🕒 Čas z Workeru:', subathonEndTime.toLocaleString("cs-CZ"));
+    } else {
+      // Výchozí: start + 24 hodin
+      subathonEndTime = new Date(SUBATHON_START.getTime() + (INITIAL_DURATION_HOURS * 60 * 60 * 1000));
+      console.log('⚠️ Používám výchozí čas (Worker nevrátil platný)');
     }
     
-    // 2. PENÍZE
-    $("#money").textContent = `${formatKc(data.money)} Kč`;
-    $("#moneySmall").textContent = `${formatKc(data.money)} / ${formatKc(GOAL_TOTAL)} Kč`;
+    // 1. PENÍZE
+    const money = data.money || 0;
+    $("#money").textContent = `${formatKc(money)} Kč`;
+    $("#moneySmall").textContent = `${formatKc(money)} / ${formatKc(GOAL_TOTAL)} Kč`;
     
-    // 3. SUBY
-    $("#subsTotal").textContent = data.subsTotal;
-    $("#subsBreak").textContent = `${data.t1} / ${data.t2} / ${data.t3}`;
+    // 2. SUBY
+    const t1 = data.t1 || 0;
+    const t2 = data.t2 || 0;
+    const t3 = data.t3 || 0;
+    const subsTotal = data.subsTotal || (t1 + t2 + t3);
     
-    // 4. GOALS
-    renderGoals(data.money);
-    renderSubGoals(data.subsTotal);
+    $("#subsTotal").textContent = subsTotal;
+    $("#subsBreak").textContent = `${t1} / ${t2} / ${t3}`;
     
-    // 5. TOP DONORS
+    // 3. GOALS
+    renderGoals(money);
+    renderSubGoals(subsTotal);
+    
+    // 4. TOP DONORS
     renderTopDonors(data.topDonors || []);
     
-    // 6. AKTIVITY
+    // 5. AKTIVITY
     renderActivityFeed(data.lastEvents || []);
     
-    // 7. PROGRESS HEADERS
-    $("#goalHeader").textContent = `${formatKc(data.money)} / ${formatKc(GOAL_TOTAL)} Kč`;
-    $("#subGoalHeader").textContent = `${data.subsTotal} / ${SUB_GOAL_TOTAL} subs`;
+    // 6. PROGRESS HEADERS
+    $("#goalHeader").textContent = `${formatKc(money)} / ${formatKc(GOAL_TOTAL)} Kč`;
+    $("#subGoalHeader").textContent = `${subsTotal} / ${SUB_GOAL_TOTAL} subs`;
     
-    // 8. ULOŽ DATA JAKO ZÁLOHU
+    // 7. ULOŽ DATA JAKO ZÁLOHU
     const backup = {
-      money: data.money,
-      t1: data.t1,
-      t2: data.t2,
-      t3: data.t3,
-      subsTotal: data.subsTotal,
+      money: money,
+      t1: t1,
+      t2: t2,
+      t3: t3,
+      subsTotal: subsTotal,
+      endsAt: subathonEndTime.getTime(),
       topDonors: data.topDonors || [],
       lastEvents: data.lastEvents || []
     };
@@ -181,31 +178,51 @@ async function loadDataFromWorker() {
   } catch (error) {
     console.error('❌ Chyba při načítání z API:', error);
     // Zkus načíst záložní data
-    try {
-      const backup = JSON.parse(localStorage.getItem('fufathon_api_backup') || '{}');
-      if (backup.money !== undefined) {
-        console.log('⚡ Používám záložní data');
-        $("#money").textContent = `${formatKc(backup.money)} Kč`;
-        $("#moneySmall").textContent = `${formatKc(backup.money)} / ${formatKc(GOAL_TOTAL)} Kč`;
-        $("#subsTotal").textContent = backup.subsTotal || 0;
-        $("#subsBreak").textContent = `${backup.t1 || 0} / ${backup.t2 || 0} / ${backup.t3 || 0}`;
-        renderGoals(backup.money);
-        renderSubGoals(backup.subsTotal);
-        renderTopDonors(backup.topDonors || []);
-        renderActivityFeed(backup.lastEvents || []);
-      }
-    } catch (backupError) {
-      console.error('❌ Ani záložní data nefungují:', backupError);
-      // Zobraz aspoň něco
-      $("#money").textContent = "0 Kč";
-      $("#moneySmall").textContent = "0 / 200 000 Kč";
-      $("#subsTotal").textContent = "0";
-      $("#subsBreak").textContent = "0 / 0 / 0";
-    }
+    fallbackToLocalData();
   }
 }
 
-// ===== RENDER FUNKCE (ponech z původního kódu) =====
+// ===== ZÁLOŽNÍ FUNKCE =====
+function fallbackToLocalData() {
+  try {
+    const backup = JSON.parse(localStorage.getItem('fufathon_api_backup') || '{}');
+    
+    if (backup.money !== undefined) {
+      console.log('⚡ Používám záložní data z localStorage');
+      
+      if (backup.endsAt) {
+        subathonEndTime = new Date(backup.endsAt);
+      }
+      
+      $("#money").textContent = `${formatKc(backup.money)} Kč`;
+      $("#moneySmall").textContent = `${formatKc(backup.money)} / ${formatKc(GOAL_TOTAL)} Kč`;
+      $("#subsTotal").textContent = backup.subsTotal || 0;
+      $("#subsBreak").textContent = `${backup.t1 || 0} / ${backup.t2 || 0} / ${backup.t3 || 0}`;
+      renderGoals(backup.money);
+      renderSubGoals(backup.subsTotal || 0);
+      renderTopDonors(backup.topDonors || []);
+      renderActivityFeed(backup.lastEvents || []);
+    } else {
+      showEmptyState();
+    }
+  } catch (error) {
+    console.error('❌ Ani záložní data nefungují:', error);
+    showEmptyState();
+  }
+}
+
+function showEmptyState() {
+  $("#money").textContent = "0 Kč";
+  $("#moneySmall").textContent = "0 / 200 000 Kč";
+  $("#subsTotal").textContent = "0";
+  $("#subsBreak").textContent = "0 / 0 / 0";
+  renderGoals(0);
+  renderSubGoals(0);
+  renderTopDonors([]);
+  renderActivityFeed([]);
+}
+
+// ===== RENDER FUNKCE =====
 function renderGoals(money) {
   const m = Number(money) || 0;
   const list = $("#goalList");
@@ -253,6 +270,18 @@ function renderTopDonors(donors) {
   if (!tbody) return;
   
   const donorsArray = donors || [];
+  
+  if (donorsArray.length === 0) {
+    tbody.innerHTML = `
+      <tr>
+        <td colspan="4" style="text-align: center; padding: 20px; color: var(--text-muted);">
+          Zatím žádní dárci... buď první! 💜
+        </td>
+      </tr>
+    `;
+    return;
+  }
+  
   const rows = donorsArray.slice(0, 5).map((donor, i) => `
     <tr>
       <td>${i + 1}</td>
@@ -262,13 +291,7 @@ function renderTopDonors(donors) {
     </tr>
   `).join('');
   
-  tbody.innerHTML = rows || `
-    <tr>
-      <td colspan="4" class="mutedCell">
-        Zatím žádní dárci... buď první! 💜
-      </td>
-    </tr>
-  `;
+  tbody.innerHTML = rows;
 }
 
 function renderActivityFeed(events) {
@@ -276,6 +299,16 @@ function renderActivityFeed(events) {
   if (!feed) return;
   
   const eventsArray = events || [];
+  
+  if (eventsArray.length === 0) {
+    feed.innerHTML = `
+      <div class="activity-item" style="text-align: center; padding: 20px; color: var(--text-muted);">
+        Zatím žádné akce...
+      </div>
+    `;
+    return;
+  }
+  
   const feedHTML = eventsArray.slice(0, 10).map(event => {
     const time = event.ts ? 
       new Date(event.ts).toLocaleTimeString("cs-CZ", { hour: "2-digit", minute: "2-digit" }) : 
@@ -287,15 +320,19 @@ function renderActivityFeed(events) {
     if (event.kind === "donation") {
       icon = "💰";
       text = `Donate ${formatKc(event.amountKc)} Kč`;
+      if (event.sender) text += ` od ${event.sender}`;
     } else if (event.kind === "sub") {
       icon = "⭐";
-      text = `Nový sub (T${event.tier})`;
+      text = `Nový sub T${event.tier || 1}`;
+      if (event.sender) text += ` od ${event.sender}`;
     } else if (event.kind === "resub") {
       icon = "🔁";
-      text = `Resub ${event.months} měs.`;
+      text = `Resub ${event.months || 1} měs.`;
+      if (event.sender) text += ` od ${event.sender}`;
     } else if (event.kind === "gift") {
       icon = "🎁";
-      text = `Darováno ${event.count}× sub`;
+      text = `Darováno ${event.count || 1}× sub T${event.tier || 1}`;
+      if (event.sender) text += ` od ${event.sender}`;
     }
     
     return `
@@ -306,11 +343,7 @@ function renderActivityFeed(events) {
     `;
   }).join('');
   
-  feed.innerHTML = feedHTML || `
-    <div class="activity-item">
-      <span class="activity-text">Zatím žádné akce...</span>
-    </div>
-  `;
+  feed.innerHTML = feedHTML;
 }
 
 // ===== THEME TOGGLE =====
@@ -338,22 +371,24 @@ function initTheme() {
 
 // ===== INICIALIZACE =====
 function initDashboard() {
-  console.log('🚀 Dashboard inicializován (centralizovaná verze)');
+  console.log('🚀 Dashboard inicializován');
+  console.log('🕒 Start subathonu:', SUBATHON_START.toLocaleString("cs-CZ"));
+  console.log('🕒 Výchozí konec:', subathonEndTime.toLocaleString("cs-CZ"));
   
-  // 1. Téma
+  // 1. Inicializuj téma
   initTheme();
   
-  // 2. Načti data z Workeru OKAMŽITĚ
+  // 2. OKAMŽITĚ zobraz čas (před načtením dat)
+  updateTimers();
+  
+  // 3. Načti data z Workeru
   loadDataFromWorker();
   
-  // 3. Nastav interval pro obnovování dat (každých 3 sekundy)
-  setInterval(loadDataFromWorker, 3000);
+  // 4. Nastav interval pro obnovování dat (každých 5 sekund)
+  setInterval(loadDataFromWorker, 5000);
   
-  // 4. Nastav interval pro timer (každou sekundu)
+  // 5. Nastav interval pro timer (každou sekundu)
   setInterval(updateTimers, 1000);
-  
-  // 5. OKAMŽITÉ zobrazení timeru
-  updateTimers();
 }
 
 // ===== START =====
