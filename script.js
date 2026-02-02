@@ -254,8 +254,8 @@
     if (!state) return;
 
     // Cloudflare state: totalDonations, totalSubs, topDonors, events, totalMinutes
-    const money = Number(state.totalDonations || 0);
-    const subs = Number(state.totalSubs || 0);
+    const money = Number(state.money || 0);
+    const subs = Number(state.subs || 0);
 
     safeText($("money"), `${formatKc(money)} Kč`);
     safeText($("moneySmall"), `${formatKc(money)} / 200 000 Kč`);
