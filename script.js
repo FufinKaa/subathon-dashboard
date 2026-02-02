@@ -1,13 +1,13 @@
-/* FUFATHON Dashboard — KOMPLETNÍ S VŠEMI GOALS */
+/* FUFATHON Dashboard — FINÁLNÍ VERZE */
 
 (function () {
-  // ========= API KONFIGURACE =========
+  // ========= KONFIGURACE =========
   const API_URL = "https://fufathon-api.pajujka191.workers.dev";
   const START_AT = new Date("2026-02-09T14:00:00+01:00");
   const THEME_KEY = "fufathon-theme";
-  const POLL_MS = 10000; // Aktualizace každých 10 sekund
+  const POLL_MS = 10000; // 10 sekund
 
-  // ========= VŠECHNY DONATEGOALS Z OBRÁZKU =========
+  // ========= GOALS =========
   const DONATE_GOALS = [
     { amount: 5000, icon: "🎬", title: "Movie night" },
     { amount: 10000, icon: "😏", title: "Q&A bez cenzury" },
@@ -42,7 +42,6 @@
     { amount: 200000, icon: "🏙️", title: "Víkend v Praze" }
   ];
 
-  // ========= SUBGOALS Z OBRÁZKU =========
   const SUB_GOALS = [
     { amount: 100, icon: "🍳", title: "Snídaně podle chatu" },
     { amount: 200, icon: "💄", title: "Make-up challenge" },
@@ -55,23 +54,10 @@
     { amount: 1000, icon: "🏎️", title: "Jízda ve sporťáku" }
   ];
 
-  // ========= PROMĚNNÉ =========
-  let currentMoney = 0;
-  let currentSubs = 0;
-
   // ========= HELPERS =========
   const $ = (id) => document.getElementById(id);
-
   function pad(n) { return String(n).padStart(2, "0"); }
   function formatKc(n) { return Number(n || 0).toLocaleString("cs-CZ"); }
-
-  function msToClock(ms) {
-    const s = Math.max(0, Math.floor(ms / 1000));
-    const h = Math.floor(s / 3600);
-    const m = Math.floor((s % 3600) / 60);
-    const sec = s % 60;
-    return `${pad(h)}:${pad(m)}:${pad(sec)}`;
-  }
 
   // ========= TÉMA =========
   function initTheme() {
@@ -99,67 +85,53 @@
     });
   }
 
-  // ========= ČASOVAČ =========
-  function initRunningTimer() {
+  // ========= TIMER =========
+  function initTimer() {
     const el = $("timeRunning");
-    const info = $("startedAtText");
     if (!el) return;
 
-    const tick = () => {
-      el.textContent = msToClock(Date.now() - START_AT.getTime());
-      if (info) info.textContent = "Start: 09. 02. 2026 14:00";
-    };
+    function updateTimer() {
+      const now = new Date();
+      const diff = now - START_AT;
+      if (diff < 0) {
+        el.textContent = "00:00:00";
+        return;
+      }
+      
+      const seconds = Math.floor(diff / 1000);
+      const hours = Math.floor(seconds / 3600);
+      const minutes = Math.floor((seconds % 3600) / 60);
+      const secs = seconds % 60;
+      
+      el.textContent = `${pad(hours)}:${pad(minutes)}:${pad(secs)}`;
+    }
 
-    tick();
-    setInterval(tick, 1000);
+    updateTimer();
+    setInterval(updateTimer, 1000);
   }
 
-  // ========= NAČTENÍ DAT Z API =========
+  // ========= API =========
   async function fetchData() {
     try {
-      console.log("🔄 Načítám data z API...");
-      const response = await fetch(API_URL, {
-        cache: 'no-store',
-        headers: {
-          'Accept': 'application/json'
-        }
-      });
-      
-      if (!response.ok) {
-        console.error(`❌ API error: ${response.status}`);
-        return null;
-      }
-      
+      const response = await fetch(API_URL);
+      if (!response.ok) return null;
       const data = await response.json();
-      
-      if (data.success === false) {
-        console.error("❌ API vrátilo chybu:", data.error);
-        return null;
-      }
-      
-      console.log("✅ Data načtena:", {
-        money: data.money + " Kč",
-        subs: data.subs,
-        donors: data.topDonators?.length || 0,
-        activities: data.recentActivity?.length || 0
-      });
-      return data;
-      
+      return data.success === false ? null : data;
     } catch (error) {
-      console.error("❌ Chyba při načítání dat:", error.message);
+      console.error("API error:", error);
       return null;
     }
   }
 
-  // ========= RENDEROVÁNÍ GOALS =========
-  function renderDonateGoals() {
+  // ========= RENDER GOALS =========
+  function renderDonateGoals(money) {
     const body = $("goalTableBody");
     if (!body) return;
     
     body.innerHTML = "";
     
     DONATE_GOALS.forEach(goal => {
-      const done = currentMoney >= goal.amount;
+      const done = money >= goal.amount;
       const tr = document.createElement("tr");
       tr.className = "goal-tr" + (done ? " done" : "");
       tr.innerHTML = `
@@ -171,14 +143,14 @@
     });
   }
 
-  function renderSubGoals() {
+  function renderSubGoals(subs) {
     const body = $("subGoalTableBody");
     if (!body) return;
     
     body.innerHTML = "";
     
     SUB_GOALS.forEach(goal => {
-      const done = currentSubs >= goal.amount;
+      const done = subs >= goal.amount;
       const tr = document.createElement("tr");
       tr.className = "goal-tr" + (done ? " done" : "");
       tr.innerHTML = `
@@ -190,7 +162,7 @@
     });
   }
 
-  // ========= TOP DONÁTOŘI =========
+  // ========= TOP 5 DONÁTORŮ =========
   function renderTopDonators(list) {
     const body = $("topTableBody");
     if (!body) return;
@@ -204,19 +176,19 @@
       return;
     }
 
-    list.forEach((donor, idx) => {
+    list.slice(0, 5).forEach((donor, idx) => {
       const tr = document.createElement("tr");
       tr.innerHTML = `
         <td>${idx + 1}</td>
-        <td class="donor-name">${donor.name}</td>
-        <td class="donor-amount">${formatKc(donor.amount)} Kč</td>
-        <td class="donor-time">${Math.round(donor.amount * 0.15)} min</td>
+        <td>${donor.name}</td>
+        <td>${formatKc(donor.amount)} Kč</td>
+        <td>${Math.round(donor.amount * 0.15)} min</td>
       `;
       body.appendChild(tr);
     });
   }
 
-  // ========= POSLEDNÍ AKCE =========
+  // ========= 10 POSLEDNÍCH AKCÍ =========
   function renderRecentActivity(activities) {
     const feed = $("feed");
     if (!feed) return;
@@ -231,7 +203,7 @@
       return;
     }
 
-    activities.forEach(activity => {
+    activities.slice(0, 10).forEach(activity => {
       const div = document.createElement("div");
       div.className = "activity-item";
       div.innerHTML = `
@@ -242,158 +214,47 @@
     });
   }
 
-  // ========= VÝPOČET PROGRESU =========
-  function calculateProgress() {
-    // Celkové maximum pro donategoal
-    const totalGoal = 200000;
-    const moneyProgress = Math.min(100, (currentMoney / totalGoal) * 100);
-    
-    // Celkové maximum pro subgoal
-    const subGoal = 1000;
-    const subProgress = Math.min(100, (currentSubs / subGoal) * 100);
-    
-    return { moneyProgress, subProgress };
-  }
-
-  // ========= AKTUALIZACE DASHBOARDU =========
+  // ========= HLAVNÍ UPDATE =========
   async function updateDashboard() {
-    console.log("📊 Aktualizuji dashboard...");
-    
     const data = await fetchData();
     
     if (data) {
-      // Uložit aktuální hodnoty
-      currentMoney = data.money || 0;
-      currentSubs = data.subs || 0;
+      const money = data.money || 0;
+      const subs = data.subs || 0;
       
-      // Výpočet progresu
-      const progress = calculateProgress();
+      // Aktualizovat čísla
+      if ($("money")) $("money").textContent = `${formatKc(money)} Kč`;
+      if ($("moneySmall")) $("moneySmall").textContent = `${formatKc(money)} / 200 000 Kč`;
+      if ($("subsTotal")) $("subsTotal").textContent = subs;
+      if ($("subGoalHeader")) $("subGoalHeader").textContent = `${subs} / 1000 subs`;
+      if ($("goalHeader")) $("goalHeader").textContent = `${formatKc(money)} / 200 000 Kč`;
       
-      console.log(`💰 Peníze: ${formatKc(currentMoney)} Kč | 📈 Suby: ${currentSubs}`);
-      console.log(`📊 Progress: Donate ${progress.moneyProgress.toFixed(1)}% | Sub ${progress.subProgress.toFixed(1)}%`);
+      // Renderovat
+      renderDonateGoals(money);
+      renderSubGoals(subs);
+      renderTopDonators(data.topDonators);
+      renderRecentActivity(data.recentActivity);
       
-      // Aktualizovat statistiky
-      if ($("money")) {
-        $("money").textContent = `${formatKc(currentMoney)} Kč`;
-      }
-      
-      if ($("moneySmall")) {
-        $("moneySmall").textContent = `${formatKc(currentMoney)} / ${formatKc(200000)} Kč`;
-      }
-      
-      if ($("subsTotal")) {
-        $("subsTotal").textContent = currentSubs;
-      }
-      
-      if ($("subGoalHeader")) {
-        $("subGoalHeader").textContent = `${currentSubs} / 1000 subs`;
-      }
-      
-      if ($("goalHeader")) {
-        $("goalHeader").textContent = `${formatKc(currentMoney)} / ${formatKc(200000)} Kč`;
-      }
-      
-      // Renderovat goals
-      renderDonateGoals();
-      renderSubGoals();
-      
-      // Renderovat top donátory a aktivitu
-      renderTopDonators(data.topDonators || []);
-      renderRecentActivity(data.recentActivity || []);
-      
-      // Přidat animaci pro změny
-      animateUpdate();
-      
-      return true;
-      
-    } else {
-      console.log("⚠️ Nepodařilo se načíst data");
-      // Fallback hodnoty
-      if ($("money")) $("money").textContent = "0 Kč";
-      if ($("subsTotal")) $("subsTotal").textContent = "0";
-      if ($("moneySmall")) $("moneySmall").textContent = "0 / 200 000 Kč";
-      if ($("subGoalHeader")) $("subGoalHeader").textContent = "0 / 1000 subs";
-      if ($("goalHeader")) $("goalHeader").textContent = "0 / 200 000 Kč";
-      
-      renderDonateGoals();
-      renderSubGoals();
-      renderTopDonators([]);
-      renderRecentActivity([]);
-      
-      return false;
+      console.log("✅ Aktualizováno:", { money, subs });
     }
   }
 
-  // ========= ANIMACE =========
-  function animateUpdate() {
-    // Animace pro peníze
-    const moneyEl = $("money");
-    if (moneyEl) {
-      moneyEl.style.transform = "scale(1.05)";
-      moneyEl.style.transition = "transform 0.2s ease";
-      setTimeout(() => {
-        moneyEl.style.transform = "scale(1)";
-      }, 200);
-    }
-    
-    // Animace pro suby
-    const subsEl = $("subsTotal");
-    if (subsEl) {
-      subsEl.style.transform = "scale(1.05)";
-      subsEl.style.transition = "transform 0.2s ease";
-      setTimeout(() => {
-        subsEl.style.transform = "scale(1)";
-      }, 200);
-    }
-  }
-
-  // ========= TEST FUNKCE =========
-  function testData() {
-    console.log("🧪 Testovací data...");
-    currentMoney = 12500;
-    currentSubs = 450;
-    
-    // Aktualizovat statistiky
-    if ($("money")) $("money").textContent = `${formatKc(currentMoney)} Kč`;
-    if ($("subsTotal")) $("subsTotal").textContent = currentSubs;
-    
-    // Renderovat s testovacími daty
-    renderDonateGoals();
-    renderSubGoals();
-    
-    console.log("✅ Testovací data aplikována");
-  }
-
-  // ========= INICIALIZACE =========
+  // ========= START =========
   document.addEventListener("DOMContentLoaded", () => {
-    console.log("🚀 FUFATHON Dashboard se spouští...");
-    console.log("📅 Start: 09. 02. 2026 14:00");
-    console.log("🌐 API URL:", API_URL);
-    console.log("🔄 Interval aktualizace:", POLL_MS / 1000, "sekund");
+    console.log("🚀 FUFATHON Dashboard startuje...");
     
-    // Inicializace tématu
+    // Inicializace
     initTheme();
+    initTimer();
     
-    // Inicializace časovače
-    initRunningTimer();
-    
-    // První načtení dat
+    // První načtení
     updateDashboard();
     
-    // Automatická aktualizace každých 10 sekund
+    // Auto-update každých 10s
     setInterval(updateDashboard, POLL_MS);
     
-    // Debugging funkce
+    // Pro ruční update
     window.refreshDashboard = updateDashboard;
-    window.testDashboard = testData;
-    window.showGoals = () => {
-      console.log("🎯 Donategoals:", DONATE_GOALS.length);
-      console.log("🎯 Subgoals:", SUB_GOALS.length);
-    };
-    
-    console.log("✅ Dashboard ready!");
-    console.log("ℹ️ Použij refreshDashboard() pro manuální obnovení");
-    console.log("ℹ️ Použij testDashboard() pro testovací data");
   });
 
 })();
