@@ -810,3 +810,57 @@ table.goals-table td{
   color: var(--accent, #c77dff);
   white-space:nowrap;
 }
+
+/* ===== NIGHT MODE ===== */
+body.night-mode {
+  background: #0a0a1a;
+  color: #e0e0ff;
+}
+
+.night-mode .bgGlow {
+  background: radial-gradient(circle at 50% 0%, rgba(100, 80, 255, 0.15), transparent 60%);
+}
+
+.night-mode .card {
+  background: rgba(20, 20, 40, 0.9);
+  border-color: #2a2a5a;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+}
+
+.night-mode .stat-card {
+  background: rgba(30, 30, 60, 0.9);
+  border-color: #3a3a7a;
+}
+
+.night-mode .timer-box {
+  background: rgba(40, 30, 80, 0.9);
+  border-color: #5a4aaa;
+}
+
+.night-mode .timer-display.violet {
+  color: #b19cff;
+  text-shadow: 0 0 20px rgba(177, 156, 255, 0.5);
+}
+
+.night-mode .rule-pill {
+  background: rgba(60, 50, 120, 0.7);
+  border-color: #7a6add;
+}
+
+.night-mode .goals-table tr:hover {
+  background: rgba(80, 70, 150, 0.3);
+}
+
+.night-mode .activity-item {
+  border-bottom-color: #2a2a5a;
+}
+
+.night-mode .theme-btn {
+  background: rgba(60, 50, 120, 0.8);
+  border-color: #7a6add;
+  color: #e0e0ff;
+}
+
+.night-mode .theme-btn:hover {
+  background: rgba(80, 70, 150, 0.9);
+}
