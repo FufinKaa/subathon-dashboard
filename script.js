@@ -59,29 +59,39 @@
   const kc = n => Number(n || 0).toLocaleString("cs-CZ");
   const pad = n => String(n).padStart(2, "0");
 
-  // 🌙 PŘEPÍNÁNÍ DEN/NOC (Nové!)
+  // 🌙 PŘEPÍNÁNÍ DEN/NOC - OPRAVENO pro tvůj CSS systém
   function setupThemeToggle() {
     const themeBtn = document.getElementById('themeBtn');
     const themeIcon = document.getElementById('themeIcon');
     const themeText = document.getElementById('themeText');
     
-    if (!themeBtn) return; // Pokud tlačítko neexistuje, skončíme
+    if (!themeBtn) return;
     
     themeBtn.addEventListener('click', () => {
-      document.body.classList.toggle('night-mode');
-      const isNight = document.body.classList.contains('night-mode');
-      themeIcon.textContent = isNight ? '☀️' : '🌙';
-      themeText.textContent = isNight ? 'Den' : 'Noc';
-      localStorage.setItem('theme', isNight ? 'night' : 'day');
+      const html = document.documentElement;
+      const currentTheme = html.getAttribute('data-theme');
+      const newTheme = currentTheme === 'light' ? 'dark' : 'light';
+      
+      // Nastav data-theme na <html> (to tvůj CSS očekává)
+      html.setAttribute('data-theme', newTheme);
+      
+      // Aktualizuj tlačítko
+      const isLight = newTheme === 'light';
+      themeIcon.textContent = isLight ? '🌙' : '☀️';
+      themeText.textContent = isLight ? 'Noc' : 'Den';
+      
+      // Ulož do localStorage
+      localStorage.setItem('theme', newTheme);
     });
 
     // Načtení uloženého tématu
-    const savedTheme = localStorage.getItem('theme');
-    if (savedTheme === 'night') {
-      document.body.classList.add('night-mode');
-      if (themeIcon) themeIcon.textContent = '☀️';
-      if (themeText) themeText.textContent = 'Den';
-    }
+    const savedTheme = localStorage.getItem('theme') || 'dark';
+    document.documentElement.setAttribute('data-theme', savedTheme);
+    
+    // Aktualizace tlačítka
+    const isLight = savedTheme === 'light';
+    if (themeIcon) themeIcon.textContent = isLight ? '🌙' : '☀️';
+    if (themeText) themeText.textContent = isLight ? 'Noc' : 'Den';
   }
 
   // ⏰ TIMER FUNKCE (Upraveno!)
@@ -253,7 +263,7 @@
   document.addEventListener("DOMContentLoaded", () => {
     console.log("🚀 FUFATHON Dashboard se spouští...");
     
-    // 1. Nastavení přepínání tématu
+    // 1. Nastavení přepínání tématu (OPRAVENO)
     setupThemeToggle();
     
     // 2. Spuštění timeru
