@@ -213,15 +213,15 @@
     }
     
     donors.slice(0, 5).forEach((d, i) => {
-      const addedTime = Math.round(d.amount * 0.15); // 100 Kč = +15 min
-      body.innerHTML += `
-        <tr>
-          <td><strong>#${i + 1}</strong></td>
-          <td>${d.name || "Anonym"}</td>
-          <td>${kc(d.amount)} Kč</td>
-          <td>+${addedTime} min</td>
-        </tr>`;
-    });
+donors.slice(0, 5).forEach((d, i) => {
+  body.innerHTML += `
+    <tr>
+      <td><strong>#${i + 1}</strong></td>
+      <td>${d.name || "Anonym"}</td>
+      <td>${kc(d.amount)} Kč</td>
+      <td></td>
+    </tr>`;
+});
   }
 
   // 📝 POSLEDNÍ AKCE
